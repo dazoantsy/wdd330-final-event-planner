@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Planner — Welcome</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <header>
+        <h1>Event Planner</h1>
+    </header>
+
+    <main>
+        <section class="card" style="max-width:520px;width:100%;">
+            <h2 style="text-align:center;margin-top:0;">Welcome</h2>
+            <p style="text-align:center;margin-bottom:1rem;">
+                Please sign in or create an account to continue.
+            </p>
+
+            <div class="row" style="justify-content:center;margin-bottom:.5rem;">
+                <button id="tab-signin" type="button">Sign in</button>
+                <button id="tab-create" type="button">Create account</button>
+            </div>
+
+            <!-- Sign in -->
+            <form id="form-signin" autocomplete="on">
+                <label>Email
+                    <input id="si-email" type="email" required placeholder="you@example.com" />
+                </label>
+                <button type="submit">Sign in</button>
+            </form>
+
+            <!-- Create account -->
+            <form id="form-create" style="display:none;" autocomplete="on">
+                <label>Full name
+                    <input id="cr-name" required placeholder="Your Name" />
+                </label>
+                <label>Email
+                    <input id="cr-email" type="email" required placeholder="you@example.com" />
+                </label>
+                <button type="submit">Create account</button>
+            </form>
+
+            <p id="auth-msg" style="margin-top:.75rem;min-height:1.2em;text-align:center;"></p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 — DAZOANTSY PROD</p>
+    </footer>
+
+    <script type="module" src="js/landing.js"></script>
+</body>
+
+</html>

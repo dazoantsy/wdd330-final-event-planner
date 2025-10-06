@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Event</title>
+    <link rel="stylesheet" href="../css/style.css" />
+</head>
+
+<body>
+    <header>
+        <h1>Create Event</h1>
+        <nav>
+            <a href="./index.html">My Events</a>
+            <a href="../index.html">Logout</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <form id="create-event-form" class="card" autocomplete="off">
+            <label>Title
+                <input id="title" required />
+            </label>
+
+            <label>Start date
+                <input id="startDate" type="date" required />
+            </label>
+
+            <label>Start time
+                <input id="startTime" type="time" required />
+            </label>
+
+            <label>End date (optional)
+                <input id="endDate" type="date" />
+            </label>
+
+            <label>End time (optional)
+                <input id="endTime" type="time" />
+            </label>
+
+            <label>Location</label>
+            <div class="has-suggestions">
+                <input id="location" placeholder="Address or 'lat,lon'" required />
+                <ul id="loc-suggestions" hidden></ul>
+            </div>
+
+            <label>Type
+                <select id="type">
+                    <option>Meeting</option>
+                    <option>Birthday</option>
+                    <option>Training</option>
+                    <option>Other</option>
+                </select>
+            </label>
+
+            <label>Description
+                <textarea id="description" rows="3"></textarea>
+            </label>
+
+            <div class="row">
+                <button type="button" id="preview-weather">Preview Weather</button>
+                <button type="submit">Create</button>
+            </div>
+        </form>
+
+        <div id="weather-preview" class="card" hidden></div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 — Event Planner</p>
+    </footer>
+
+    <script type="module" src="../js/events.js"></script>
+</body>
+
+</html>
