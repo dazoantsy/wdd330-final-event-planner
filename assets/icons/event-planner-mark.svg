@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
+      .russo { font-family: 'Russo One', Impact, 'Arial Black', system-ui, sans-serif; }
+    </style>
+    <clipPath id="mask">
+      <circle cx="256" cy="256" r="220" />
+    </clipPath>
+  </defs>
+
+  <rect width="512" height="512" rx="64" fill="#0f172a"/>
+  <circle cx="256" cy="256" r="228" fill="none" stroke="#0ea5e9" stroke-width="14" opacity="0.9"/>
+  <g clip-path="url(#mask)">
+    <image href="assets/images/logo-source.png" x="36" y="36" width="440" height="440" preserveAspectRatio="xMidYMid slice"/>
+    <rect x="36" y="36" width="440" height="440" fill="#0b1220" opacity="0.2"/>
+  </g>
+  <text class="russo" x="50%" y="54%" text-anchor="middle" font-size="180" fill="#93c5fd" style="letter-spacing:2px">E</text>
+  <text class="russo" x="50%" y="74%" text-anchor="middle" font-size="180" fill="#2563eb" style="letter-spacing:2px">P</text>
+</svg>

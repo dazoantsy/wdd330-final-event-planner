@@ -1,132 +1,77 @@
-// api.js — geocoding via Photon (Komoot) + weather (Open-Meteo fallback)
+// js/api.js — client Supabase + géocodage + météo
+// Remplace tout le fichier par cette version.
 
-// ============ GEOCODING (Photon) ============
-export async function searchPlaces(query) {
-    if (!query) return [];
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+// 👉 RENSEIGNE ces deux variables :
+const SUPABASE_URL = window.env?.SUPABASE_URL || "https://cekijhhbnxgapiqlowfx.supabase.co";
+const SUPABASE_ANON_KEY = window.env?.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNla2lqaGhibnhnYXBpcWxvd2Z4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5ODcwMzQsImV4cCI6MjA3NTU2MzAzNH0.Pefh7gC-oSAgPVUiO1t2WvH70cdPT81YvqaHcbCgDKc";
+
+// Client unique pour toute l'app
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// --- Utilitaires communs ---
+export const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const toNum = (v) => (v == null ? null : Number(v));
+
+// --- Géocodage (OpenStreetMap via geocode.maps.co : pas de clé, CORS OK) ---
+/**
+ * Geocode une requête texte et renvoie un tableau d'objets { label, lat, lon }
+ * @param {string} query
+ * @returns {Promise<Array<{label:string, lat:number, lon:number}>>}
+ */
+export async function geocode(query) {
+    const q = (query || "").trim();
+    if (!q) return [];
+    // service simple basé sur OSM (proxy public)
+    const url = `https://geocode.maps.co/search?q=${encodeURIComponent(q)}&limit=5`;
     try {
-        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`;
-        const res = await fetch(url, { method: "GET" });
-        if (!res.ok) throw new Error(`Photon HTTP ${res.status}`);
+        const res = await fetch(url, { headers: { "Accept": "application/json" } });
+        if (!res.ok) throw new Error(`geocode HTTP ${res.status}`);
         const data = await res.json();
-        const feats = data?.features || [];
-        return feats.map(f => ({
-            lat: Number(f.geometry.coordinates[1]),
-            lon: Number(f.geometry.coordinates[0]),
-            display_name:
-                (f.properties?.name || "") +
-                (f.properties?.city ? `, ${f.properties.city}` : "") +
-                (f.properties?.state ? `, ${f.properties.state}` : "") +
-                (f.properties?.country ? `, ${f.properties.country}` : "")
-        }));
+        return (data || []).slice(0, 5).map(x => ({
+            label: x.display_name || `${x.name || ""}`.trim(),
+            lat: toNum(x.lat),
+            lon: toNum(x.lon),
+        })).filter(x => Number.isFinite(x.lat) && Number.isFinite(x.lon));
     } catch (err) {
-        console.error("[api.searchPlaces] failed:", err);
+        console.warn("[geocode] error:", err?.message);
         return [];
     }
 }
 
-// One result + supports "lat,lon"
-export async function geocodeOne(query) {
-    if (!query) return null;
-    const m = query.trim().match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
-    if (m) {
-        const lat = Number(m[1]);
-        const lon = Number(m[2]);
-        if (Number.isFinite(lat) && Number.isFinite(lon)) {
-            return { lat, lon, display_name: `${lat}, ${lon}` };
-        }
+// --- Météo (Open-Meteo : pas de clé) ---
+/**
+ * Récupère la météo courante + prévision simple
+ * @param {{lat:number, lon:number}} p
+ * @returns {Promise<{temperature:number|null, windspeed:number|null, code:number|null, source:string, raw:any}>}
+ */
+export async function fetchWeather({ lat, lon }) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        throw new Error("fetchWeather: invalid coordinates");
     }
-    const list = await searchPlaces(query);
-    return list[0] || null;
-}
-
-// ============ WEATHER ============
-const WEATHER_KEY = ""; // Optionnel: ta clé WeatherAPI. Laisse vide pour Open-Meteo.
-
-export async function currentWeather(lat, lon) {
-    if (WEATHER_KEY && WEATHER_KEY !== "YOUR_WEATHERAPI_KEY") {
-        try {
-            const r = await fetch(`https://api.weatherapi.com/v1/current.json?key=${WEATHER_KEY}&q=${lat},${lon}`);
-            if (!r.ok) throw new Error(`WeatherAPI HTTP ${r.status}`);
-            const d = await r.json();
-            if (d?.current) {
-                return {
-                    provider: "weatherapi",
-                    temp_c: d.current.temp_c,
-                    condition: d.current.condition?.text || "—",
-                    icon: d.current.condition?.icon || null,
-                    code: null,
-                };
-            }
-        } catch (e) {
-            console.warn("[api.currentWeather] WeatherAPI failed, fallback:", e);
-        }
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+    try {
+        const res = await fetch(url, { headers: { "Accept": "application/json" } });
+        if (!res.ok) throw new Error(`weather HTTP ${res.status}`);
+        const json = await res.json();
+        const cw = json?.current_weather || {};
+        return {
+            temperature: toNum(cw.temperature),
+            windspeed: toNum(cw.windspeed),
+            code: toNum(cw.weathercode),
+            source: "open-meteo",
+            raw: json,
+        };
+    } catch (err) {
+        console.warn("[weather] error:", err?.message);
+        return { temperature: null, windspeed: null, code: null, source: "open-meteo", raw: null };
     }
-    // Open-Meteo (sans clé)
-    const om = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`;
-    const res = await fetch(om);
-    if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
-    const d2 = await res.json();
-    const t = d2?.current?.temperature_2m;
-    const code = d2?.current?.weather_code;
-    return { provider: "open-meteo", temp_c: typeof t === "number" ? t : null, condition: codeToText(code), icon: null, code };
 }
 
-// Prévision à une date/heure locale (prend l’heure disponible la plus proche ce jour-là)
-export async function forecastAt(lat, lon, when /* Date */) {
-    const y = when.getFullYear();
-    const m = String(when.getMonth() + 1).padStart(2, "0");
-    const d = String(when.getDate()).padStart(2, "0");
-
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-        `&hourly=temperature_2m,weather_code&timezone=auto&start_date=${y}-${m}-${d}&end_date=${y}-${m}-${d}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Open-Meteo hourly HTTP ${res.status}`);
-    const data = await res.json();
-
-    const times = data?.hourly?.time || [];
-    const temps = data?.hourly?.temperature_2m || [];
-    const codes = data?.hourly?.weather_code || [];
-    if (!times.length) return null;
-
-    // Index de l’heure la plus proche
-    let best = 0, bestDiff = Infinity;
-    for (let i = 0; i < times.length; i++) {
-        const diff = Math.abs(new Date(times[i]).getTime() - when.getTime());
-        if (diff < bestDiff) { best = i; bestDiff = diff; }
-    }
-
-    const code = codes[best];
-    const temp = temps[best];
-    return {
-        provider: "open-meteo",
-        temp_c: typeof temp === "number" ? temp : null,
-        condition: codeToText(code),
-        icon: codeToEmoji(code),
-        code
-    };
-}
-
-// Mapping de code → libellé
-function codeToText(code) {
-    const m = {
-        0: "Clear", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast", 45: "Fog", 48: "Rime fog",
-        51: "Light drizzle", 53: "Drizzle", 55: "Dense drizzle",
-        61: "Light rain", 63: "Rain", 65: "Heavy rain",
-        71: "Slight snow", 73: "Snow", 75: "Heavy snow",
-        80: "Rain showers", 81: "Heavy rain showers", 82: "Violent rain showers",
-        95: "Thunderstorm", 96: "Thunderstorm (slight hail)", 99: "Thunderstorm (heavy hail)"
-    };
-    return m?.[code] ?? "—";
-}
-
-// Petit set d’icônes (emoji) simple
-function codeToEmoji(code) {
-    if (code === 0) return "☀️";
-    if (code === 1 || code === 2) return "⛅";
-    if (code === 3) return "☁️";
-    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return "🌧️";
-    if ([71, 73, 75].includes(code)) return "❄️";
-    if ([95, 96, 99].includes(code)) return "⛈️";
-    if ([45, 48].includes(code)) return "🌫️";
-    return "🌡️";
+// --- Helpers auth (facultatif mais utile) ---
+export async function requireSession() {
+    const { data } = await supabase.auth.getSession();
+    if (!data?.session?.user) throw new Error("Not authenticated");
+    return data.session;
 }

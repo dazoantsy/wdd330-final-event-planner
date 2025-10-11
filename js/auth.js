@@ -1,47 +1,90 @@
-import { load, save } from "./storage.js";
+// js/auth.js — Auth guard + header + sign out fiable
+import { supabase } from "./api.js";
+import { claimRsvpsForUser } from "./db.js";
 
-const USERS_KEY = "ep-users";   // [{id,name,email}]
-const SESSION_KEY = "ep-user";  // {id,name,email}
+const $ = (s, r = document) => r.querySelector(s);
+const AUTH_URL = `${location.origin}/auth.html`;
 
-function uid() { return crypto.randomUUID(); }
-
-export function currentUser() {
-    return load(SESSION_KEY, null);
+// ——— Helpers
+function mustAuthPage() {
+    return document.body?.dataset?.requireAuth === "true";
+}
+export async function getSession() {
+    const { data } = await supabase.auth.getSession();
+    return data?.session ?? null;
 }
 
-export function redirectIfAuthed() {
-    const u = currentUser();
-    if (u) window.location.href = "event-planner/index.html";
-}
+// ——— Header (email + sign out)
+function updateHeaderUI(session) {
+    const emailEl = $("#userEmail");
+    if (emailEl) emailEl.textContent = session?.user?.email ?? "";
 
-export function requireAuth() {
-    const u = currentUser();
-    if (!u) window.location.href = "../index.html";
-    return u;
-}
-
-export function signOut() {
-    localStorage.removeItem(SESSION_KEY);
-}
-
-export function createAccount(name, email) {
-    email = email.trim().toLowerCase();
-    const users = load(USERS_KEY, []);
-    if (users.some(u => u.email === email)) {
-        throw new Error("This email is already registered.");
+    const signOutLink = $("#signOutLink");
+    if (signOutLink) {
+        signOutLink.style.display = session?.user ? "inline" : "none";
+        signOutLink.setAttribute("data-action", "signout");
+        signOutLink.setAttribute("href", "javascript:void(0)");
     }
-    const user = { id: uid(), name: name.trim(), email };
-    users.push(user);
-    save(USERS_KEY, users);
-    save(SESSION_KEY, user);
-    return user;
 }
 
-export function signIn(email) {
-    email = email.trim().toLowerCase();
-    const users = load(USERS_KEY, []);
-    const user = users.find(u => u.email === email);
-    if (!user) throw new Error("No account found for this email.");
-    save(SESSION_KEY, user);
-    return user;
+// ——— Sign out
+async function doSignOut() {
+    try { await supabase.auth.signOut(); } catch { }
+    finally {
+        location.replace(AUTH_URL);
+        setTimeout(() => {
+            if (!/\/auth\.html(\?|$)/.test(location.href)) location.href = AUTH_URL;
+        }, 200);
+    }
 }
+document.addEventListener("click", async (e) => {
+    const t = e.target.closest?.("#signOutLink,[data-action='signout']");
+    if (!t) return;
+    e.preventDefault();
+    await doSignOut();
+}, true);
+
+// ——— Guard
+export async function requireAuthIfNeeded() {
+    const need = mustAuthPage();
+    const session = await getSession();
+
+    updateHeaderUI(session);
+    // rattache RSVP email -> user_id si besoin (sans effet si rien à faire)
+    await claimRsvpsForUser().catch(() => { });
+
+    if (need && !session?.user) {
+        const ret = encodeURIComponent(location.pathname + location.search);
+        location.replace(`${AUTH_URL}?return=${ret}`);
+        return null;
+    }
+    return session;
+}
+
+// ——— Rester synchro
+supabase.auth.onAuthStateChange((_ev, session) => {
+    updateHeaderUI(session);
+    if (mustAuthPage() && !session?.user) {
+        const ret = encodeURIComponent(location.pathname + location.search);
+        location.replace(`${AUTH_URL}?return=${ret}`);
+    }
+});
+
+// ——— Init
+getSession().then(updateHeaderUI).catch(() => { });
+
+// ---- compatibility stub: some pages import ensureDemoUser from auth.js
+export async function ensureDemoUser() {
+    // No-op for this project; kept only to satisfy older imports
+    return null;
+}
+
+// Quand header/footer sont injectés, refaire l'UI (évite la course)
+document.addEventListener("partials:ready", async () => {
+    try {
+        const { data } = await supabase.auth.getSession();
+        const session = data?.session ?? null;
+        // réutilise ta fonction existante :
+        updateHeaderUI(session);
+    } catch { }
+});

@@ -1,77 +1,89 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Create Event</title>
     <link rel="stylesheet" href="../css/style.css" />
 </head>
 
 <body>
-    <header>
-        <h1>Create Event</h1>
-        <nav>
-            <a href="./index.html">My Events</a>
-            <a href="../index.html">Logout</a>
-        </nav>
-    </header>
+    <header id="header"></header>
 
     <main class="container">
-        <form id="create-event-form" class="card" autocomplete="off">
-            <label>Title
-                <input id="title" required />
-            </label>
-
-            <label>Start date
-                <input id="startDate" type="date" required />
-            </label>
-
-            <label>Start time
-                <input id="startTime" type="time" required />
-            </label>
-
-            <label>End date (optional)
-                <input id="endDate" type="date" />
-            </label>
-
-            <label>End time (optional)
-                <input id="endTime" type="time" />
-            </label>
-
-            <label>Location</label>
-            <div class="has-suggestions">
-                <input id="location" placeholder="Address or 'lat,lon'" required />
-                <ul id="loc-suggestions" hidden></ul>
+        <form id="eventForm" class="card">
+            <!-- Bloc haut du formulaire : propre et aligné -->
+            <div class="form-grid">
+                <!-- Title -->
+                <div class="field form-span-6">
+                    <label for="title">Title</label>
+                    <input id="title" name="title" type="text" placeholder="Event title">
+                </div>
+            
+                <!-- Type -->
+                <div class="field form-span-6">
+                    <label for="type">Type</label>
+                    <select id="type" name="type">
+                        <option value="">—</option>
+                        <option>Conference</option>
+                        <option>Meetup</option>
+                        <option>Workshop</option>
+                        <option>Birthday</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+            
+                <!-- Start date -->
+                <div class="field form-span-6">
+                    <label for="start_date">Start date</label>
+                    <input id="start_date" name="start_date" type="date" placeholder="yyyy-mm-dd">
+                </div>
+            
+                <!-- End date -->
+                <div class="field form-span-6">
+                    <label for="end_date">End date</label>
+                    <input id="end_date" name="end_date" type="date" placeholder="yyyy-mm-dd">
+                </div>
+            
+                <!-- Start time -->
+                <div class="field form-span-6">
+                    <label for="time">Start time</label>
+                    <input id="time" name="time" type="time" placeholder="--:--">
+                </div>
+            
+                <!-- End time -->
+                <div class="field form-span-6">
+                    <label for="end_time">End time</label>
+                    <input id="end_time" name="end_time" type="time" placeholder="--:--">
+                </div>
             </div>
 
-            <label>Type
-                <select id="type">
-                    <option>Meeting</option>
-                    <option>Birthday</option>
-                    <option>Training</option>
-                    <option>Other</option>
-                </select>
-            </label>
+            <div class="row">
+                <label style="flex:1">Location
+                    <input id="location" name="location" type="text" placeholder="Search a place…" />
+                </label>
+                <button id="weatherBtn" type="button" class="btn">Weather</button>
+            </div>
 
-            <label>Description
-                <textarea id="description" rows="3"></textarea>
+            <label>Notes
+                <textarea id="notes" name="notes" rows="4" placeholder="Details, agenda, etc."></textarea>
             </label>
 
             <div class="row">
-                <button type="button" id="preview-weather">Preview Weather</button>
-                <button type="submit">Create</button>
+                <button id="saveBtn" class="btn primary" type="submit">Save</button>
+                <a class="btn" href="./index.html">Cancel</a>
             </div>
         </form>
-
-        <div id="weather-preview" class="card" hidden></div>
     </main>
 
-    <footer>
-        <p>&copy; 2025 — Event Planner</p>
-    </footer>
+    <footer id="footer"></footer>
+    <script src="../js/headerFooter.js"></script>
 
-    <script type="module" src="../js/events.js"></script>
+    <!-- Scripts -->
+    <script type="module" src="../js/api.js"></script>
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/event-edit.js"></script>
 </body>
 
 </html>

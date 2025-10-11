@@ -2,30 +2,82 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Event Details</title>
     <link rel="stylesheet" href="../css/style.css" />
 </head>
 
-<body>
-    <header>
-        <h1>Event Details</h1>
-        <nav><a href="./index.html">← Back to My Events</a></nav>
-    </header>
+<body data-require-auth="true">
+    <header id="header"></header>
 
     <main class="container">
-        <section class="card" id="details"></section>
-        <div class="row">
-            <button id="edit">Edit</button>
-            <button id="delete" style="background:#ef4444;">Delete</button>
-        </div>
+        <!-- DETAILS -->
+        <section class="card" id="details">
+            <h2 id="title">(untitled)</h2>
+            <p id="when">—</p>
+            <p id="where"></p>
+            <p id="notes"></p>
+
+            <div class="row">
+                <a id="editLink" class="btn" href="./edit-event.html">Edit</a>
+                <button id="deleteBtn" class="btn" type="button">Delete</button>
+            </div>
+        </section>
+
+        <!-- WEATHER -->
+        <section class="card">
+            <h3 class="with-accent">Weather</h3>
+            <div id="weatherBox" class="empty">No location set for this event.</div>
+        </section>
+
+        <!-- INVITE -->
+        <section class="card">
+            <h3>Invite someone</h3>
+            <form id="inviteForm" class="grid grid-2">
+                <label>Email to invite
+                    <input id="inviteEmail" type="email" placeholder="guest@example.com" required />
+                </label>
+                <div class="row" style="align-items:end">
+                    <button id="inviteBtn" class="btn primary" type="submit">Send invite</button>
+                </div>
+            </form>
+
+            <div id="inviteResult" class="hint" style="margin-top:.5rem"></div>
+            <div id="inviteActions" class="row" style="display:none">
+                <button id="copyInvite" class="btn" type="button">Copy link</button>
+                <a id="mailtoInvite" class="btn" target="_blank" rel="noopener">Open email app</a>
+            </div>
+        </section>
+
+        <!-- RSVP -->
+        <section class="card">
+            <h3>RSVP</h3>
+            <form id="rsvpForm" class="grid grid-2">
+                <label>Status
+                    <select name="status">
+                        <option value="yes">Yes</option>
+                        <option value="maybe">Maybe</option>
+                        <option value="no">No</option>
+                    </select>
+                </label>
+                <label>Guests <input name="guests" type="number" min="1" value="1" /></label>
+                <label>Email (optional if signed in) <input name="email" type="email"
+                        placeholder="guest@example.com" /></label>
+                <label>Note <input name="note" /></label>
+                <div class="row"><button class="btn primary" type="submit">Save RSVP</button></div>
+            </form>
+
+            <h3>Responses</h3>
+            <div id="rsvpList" class="card"></div>
+        </section>
     </main>
 
-    <footer>
-        <p>&copy; 2025 — Event Planner</p>
-    </footer>
+    <footer id="footer"></footer>
+    <script src="../js/headerFooter.js"></script>
 
+    <script type="module" src="../js/api.js"></script>
+    <script type="module" src="../js/auth.js"></script>
     <script type="module" src="../js/event-details.js"></script>
 </body>
 
