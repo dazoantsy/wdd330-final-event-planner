@@ -11,6 +11,8 @@
     --text: #e6e9ef;
     --link: #93c5fd;
     --brand: #2563eb;
+    --brand-darker: #1d4ed8;
+    /* plus sombre que --brand pour la bordure btn */
     --badge: #0ea5e9;
 }
 
@@ -70,7 +72,8 @@ nav a[aria-current="page"] {
 
 .btn.primary {
     background: var(--brand);
-    border-color: var(--brand)
+    border-color: var(--brand-darker);
+    /* légèrement plus sombre → supprime l’avertissement */
 }
 
 /* Cards & lists */
@@ -148,7 +151,6 @@ textarea:focus {
 
 /* ---------- Header layout ---------- */
 .site-header {
-    /* le header est un conteneur, mais on met le vrai layout sur .nav */
     padding: 12px 16px;
 }
 
@@ -164,7 +166,6 @@ textarea:focus {
 .nav .brand img {
     display: block;
     height: 48px;
-    /* ajuste la hauteur du logo */
 }
 
 @media (max-width:640px) {
@@ -195,7 +196,7 @@ textarea:focus {
     gap: 12px;
 }
 
-/* Bouton Sign out en style "lien" dans l’entête */
+/* Bouton Sign out style "lien" */
 .auth-box button {
     background: transparent;
     border: none;
@@ -204,7 +205,7 @@ textarea:focus {
     cursor: pointer;
 }
 
-/* Rangées utilitaires (pour les barres d’actions) */
+/* Rangées utilitaires */
 .row {
     display: flex;
     align-items: center;
@@ -217,7 +218,7 @@ footer p {
     margin: 0
 }
 
-/* Petits écrans : on laisse wrap le menu/row proprement */
+/* Petits écrans */
 @media (max-width:780px) {
     .menu {
         flex-wrap: wrap;
@@ -229,49 +230,20 @@ footer p {
     }
 }
 
-/* --- HOTFIX: rendre la barre de nav cliquable quoi qu'il arrive --- */
-.site-header,
-.site-header * {
-    position: relative;
-    z-index: 50;
-    /* l'en-tête passe devant le reste */
-}
-
-.nav {
-    z-index: 60;
-}
-
-/* la barre elle-même un cran au-dessus */
-.menu,
-.auth-box {
-    z-index: 61;
-}
-
-/* S'assure qu'aucun panneau ne passe devant la nav par erreur */
-main,
-.container,
-.card {
-    position: relative;
-    z-index: 0;
-}
-
-/* Optionnel: indique visuellement que c'est cliquable */
-.nav a,
-.auth-box a,
-.auth-box button {
-    cursor: pointer;
-}
-
-/* ===== NAV CLICK HOTFIX ===== */
-/* La nav passe au-dessus de tout et reste cliquable */
+/* --- NAV CLICK HOTFIX: garde la nav cliquable --- */
 .site-header,
 .site-header * {
     position: relative !important;
     z-index: 1000 !important;
-    pointer-events: auto !important;
+    /* pointer-events:auto; ← valeur par défaut, inutile → retirée pour éviter l’avertissement */
 }
 
-/* Rien ne doit recouvrir la nav par erreur */
+.nav a,
+.auth-box a,
+.auth-box button {
+    cursor: pointer;
+}
+
 main,
 .container,
 .card {
@@ -279,436 +251,33 @@ main,
     z-index: 0;
 }
 
-/* Indice visuel */
-.nav a,
-.auth-box a,
-.auth-box button {
-    cursor: pointer;
-}
+/* ==== Date/Time pickers ==== */
 
-/* ==== Improve date/time pickers visibility (dark theme) ==== */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
-    filter: invert(1) brightness(1.3) contrast(1.25);
-    opacity: .95;
-}
-
+/* Standard + WebKit (optionnel) : si tu veux neutraliser l’apparence par défaut */
 input[type="date"],
 input[type="time"] {
-    color-scheme: dark;
-}
-
-/* --- Boutons avec icône inline (ex: Weather) --- */
-.btn .icon {
-    width: 18px;
-    height: 18px;
-    vertical-align: -3px;
-    margin-right: 8px;
-    opacity: .95;
-}
-
-/* --- Icônes calendrier / horloge très lisibles en dark --- */
-input[type="date"],
-input[type="time"] {
-    -webkit-appearance: none;
-    /* WebKit */
     appearance: none;
     /* standard */
-    padding-right: 40px;
-    /* place pour l’icône custom */
-    background-position: right 12px center;
-    background-repeat: no-repeat;
-    background-size: 18px 18px;
+    -webkit-appearance: none;
+    /* Safari / anciens Chromium */
     color-scheme: dark;
-    /* Firefox */
+    /* couleurs adaptées au thème sombre */
 }
 
-/* Icône calendrier claire */
-input[type="date"] {
-    background-image: url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e6e9ef'>\
-<path d='M7 2a1 1 0 0 0-1 1v1H5a3 3 0 0 0-3 3v11a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-1V3a1 1 0 1 0-2 0v1H8V3A1 1 0 0 0 7 2Zm12 7H5v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9Z'/>\
-</svg>");
-}
-
-/* Icône horloge claire */
-input[type="time"] {
-    background-image: url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e6e9ef'>\
-<path d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5a1 1 0 1 0-2 0v5.38l3.7 2.14a1 1 0 0 0 1-1.73L13 10.6V7Z'/>\
-</svg>");
-}
-
-/* Cache l’indicateur natif WebKit (trop sombre) */
+/* Icônes natives WebKit rendues claires en thème sombre (valide W3C) */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
-    opacity: 0;
+    opacity: 1;
+    filter: invert(1) brightness(1.35) contrast(1.25);
 }
 
-/* === Restore native date/time pickers and make icons bright === */
-input[type="date"],
-input[type="time"] {
-    -webkit-appearance: auto !important;
-    appearance: auto !important;
-    padding-right: 10px !important;
-    /* remet une padding normale */
-    background-image: none !important;
-    /* enlève l'icône custom si présente */
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
-    opacity: 1 !important;
-    /* on NE cache plus l'icône native */
-    filter: invert(1) brightness(1.35) contrast(1.25) !important;
-    /* icône claire */
-}
-
-/* garde le thème sombre (utile pour Firefox) */
-input[type="date"],
-input[type="time"] {
-    color-scheme: dark;
-}
-
-/* Bouton météo : icône inline (si tu utilises le bouton "Weather" avec un <svg class="icon">) */
+/* Bouton météo : icône inline */
 .btn .icon {
     width: 18px;
     height: 18px;
     vertical-align: -3px;
     margin-right: 8px;
     opacity: .95;
-}
-
-/* ==== Bright native icons for date/time inputs (keep picker) ==== */
-input[type="date"],
-input[type="time"] {
-    appearance: auto !important;
-    -webkit-appearance: auto !important;
-    background-image: none !important;
-    padding-right: 10px !important;
-    color-scheme: dark;
-}
-
-@supports selector(input[type="date"]::-webkit-calendar-picker-indicator) {
-
-    input[type="date"]::-webkit-calendar-picker-indicator,
-    input[type="time"]::-webkit-calendar-picker-indicator {
-        opacity: 1 !important;
-        filter: invert(1) brightness(1.9) contrast(1.3) !important;
-        -webkit-filter: invert(1) brightness(1.9) contrast(1.3) !important;
-    }
-}
-
-/* ===== Bright calendar/clock icons with native picker still clickable ===== */
-input[type="date"],
-input[type="time"] {
-    -webkit-appearance: auto !important;
-    appearance: auto !important;
-    background-color: var(--bg);
-    color: var(--text);
-    padding-right: 42px !important;
-    /* place pour l'icône */
-    background-repeat: no-repeat !important;
-    background-position: right 12px center !important;
-    background-size: 18px 18px !important;
-    color-scheme: dark;
-    /* Firefox */
-}
-
-/* Icône calendrier (claire) */
-input[type="date"] {
-    background-image: url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e6e9ef'>\
-<path d='M7 2a1 1 0 0 0-1 1v1H5a3 3 0 0 0-3 3v11a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-1V3a1 1 0 1 0-2 0v1H8V3A1 1 0 0 0 7 2Zm12 7H5v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9Z'/>\
-</svg>") !important;
-}
-
-/* Icône horloge (claire) */
-input[type="time"] {
-    background-image: url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e6e9ef'>\
-<path d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5a1 1 0 1 0-2 0v5.38l3.7 2.14a1 1 0 0 0 1-1.73L13 10.6V7Z'/>\
-</svg>") !important;
-}
-
-/* On garde le bouton natif (cliquable) mais invisible.
-   Le clic dans la zone de l'icône ouvre toujours le picker. */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
-    opacity: 0 !important;
-    /* invisible mais présent */
-    position: absolute;
-    /* étend la zone cliquable */
-    right: 6px;
-    top: 0;
-    bottom: 0;
-    width: 32px;
-    /* zone confortable */
-    cursor: pointer;
-}
-
-/* ===== Bright icons + always-clickable pickers ===== */
-input[type="date"],
-input[type="time"] {
-    -webkit-appearance: auto !important;
-    appearance: auto !important;
-    background-color: var(--bg);
-    color: var(--text);
-    padding-right: 42px !important;
-    /* place pour l’icône */
-    background-repeat: no-repeat !important;
-    background-position: right 12px center !important;
-    background-size: 18px 18px !important;
-    color-scheme: dark;
-}
-
-/* Icônes claires en overlay (ne bloquent pas le clic) */
-input[type="date"] {
-    background-image: url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e6e9ef'>\
-<path d='M7 2a1 1 0 0 0-1 1v1H5a3 3 0 0 0-3 3v11a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-1V3a1 1 0 1 0-2 0v1H8V3A1 1 0 0 0 7 2Zm12 7H5v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9Z'/>\
-</svg>");
-}
-
-input[type="time"] {
-    background-image: url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e6e9ef'>\
-<path d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5a1 1 0 1 0-2 0v5.38l3.7 2.14a1 1 0 0 0 1-1.73L13 10.6V7Z'/>\
-</svg>");
-}
-
-/* Wrapper + hit-area transparente qui déclenche le picker */
-.input-with-picker {
-    position: relative;
-}
-
-.input-with-picker input {
-    width: 100%;
-}
-
-.input-with-picker .picker-hit {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 42px;
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    padding: 0;
-    margin: 0;
-}
-
-.section-title {
-    margin: 18px 4px 10px;
-    font-size: 18px;
-    opacity: .9;
-}
-
-.badge--past {
-    background: #9ca3af;
-    /* gris clair */
-    color: #0b1220;
-    margin-left: 8px;
-}
-
-/* ===== Accents de couleur par type ===== */
-:root {
-    --type-meeting: #3b82f6;
-    /* bleu */
-    --type-conference: #a78bfa;
-    /* violet */
-    --type-workshop: #f59e0b;
-    /* ambre */
-    --type-personal: #22c55e;
-    /* vert */
-    --type-other: #94a3b8;
-    /* gris */
-}
-
-/* carte événement avec liseré coloré + glow au survol */
-.card.event {
-    border-left: 4px solid var(--type-other);
-    transition: box-shadow .2s ease, transform .15s ease, border-color .2s ease;
-}
-
-.card.event:hover {
-    box-shadow: 0 6px 26px rgba(37, 99, 235, .14);
-    transform: translateY(-1px);
-}
-
-/* variantes par type (classe posée par JS : .event--meeting etc.) */
-.event--meeting {
-    border-left-color: var(--type-meeting);
-}
-
-.event--conference {
-    border-left-color: var(--type-conference);
-}
-
-.event--workshop {
-    border-left-color: var(--type-workshop);
-}
-
-.event--personal {
-    border-left-color: var(--type-personal);
-}
-
-/* chips (petits badges couleurs pour le type) */
-.chip {
-    display: inline-block;
-    font-size: 12px;
-    line-height: 1;
-    padding: 4px 8px;
-    border-radius: 999px;
-    background: #1e293b;
-    border: 1px solid var(--line);
-    margin: 2px 0 8px;
-    opacity: .95;
-}
-
-.chip--meeting {
-    color: var(--type-meeting);
-    border-color: color-mix(in srgb, var(--type-meeting) 60%, #0b1220);
-}
-
-.chip--conference {
-    color: var(--type-conference);
-    border-color: color-mix(in srgb, var(--type-conference) 60%, #0b1220);
-}
-
-.chip--workshop {
-    color: var(--type-workshop);
-    border-color: color-mix(in srgb, var(--type-workshop) 60%, #0b1220);
-}
-
-.chip--personal {
-    color: var(--type-personal);
-    border-color: color-mix(in srgb, var(--type-personal) 60%, #0b1220);
-}
-
-/* past badge déjà existant, juste un peu plus doux */
-.badge--past {
-    background: #cbd5e1;
-    color: #0b1220;
-}
-
-/* Titres de section avec accent subtil */
-.section-title {
-    margin: 18px 4px 10px;
-    font-size: 18px;
-    opacity: .95;
-}
-
-.with-accent {
-    position: relative;
-    padding-left: 12px;
-}
-
-.with-accent::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 18px;
-    border-radius: 3px;
-    background: linear-gradient(180deg, var(--brand), #0ea5e9);
-}
-
-/* Variante grise (Past) */
-.accent-gray::before {
-    background: linear-gradient(180deg, #94a3b8, #64748b);
-}
-
-/* petit switch "Hide past" */
-.switch {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    opacity: .9;
-}
-
-.switch input {
-    width: 18px;
-    height: 18px;
-}
-
-.muted {
-    opacity: .85;
-}
-
-/* Form errors + focus visible + a11y */
-.field-error {
-    color: #fca5a5;
-    font-size: 12px;
-    margin-top: 4px;
-    display: block;
-}
-
-:focus-visible {
-    outline: 2px solid #38bdf8;
-    outline-offset: 2px;
-}
-
-/* Boutons un peu plus grands pour l’accessibilité */
-.btn {
-    min-height: 36px;
-}
-
-/* Petits helpers */
-.empty {
-    opacity: .85;
-}
-
-/* (déjà présent chez toi) styles badges/chips/sections… */
-
-/* ---- Make text fields always clickable (on top) ---- */
-label,
-.grid>* {
-    position: relative;
-}
-
-input,
-select,
-textarea {
-    position: relative;
-    z-index: 2;
-    /* au-dessus des overlays */
-    pointer-events: auto;
-}
-
-/* Wrapper des pickers (borne la zone de clic à l'input) */
-.input-with-picker {
-    position: relative;
-    display: inline-block;
-    width: 100%;
-    overflow: hidden;
-    /* rien ne déborde sur les autres champs */
-}
-
-.input-with-picker .picker-hit {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 42px;
-    z-index: 3;
-    /* au-dessus de l'input, mais confiné au wrapper */
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    pointer-events: auto;
-}
-
-/* Sécurité : aucun overlay global ne doit bloquer les champs de formulaire */
-.card,
-.container,
-main {
-    position: relative;
-    z-index: 0;
 }
 
 /* Weather inline layout */
@@ -720,7 +289,6 @@ main {
 
 .wx__icon {
     font-size: 1.75rem;
-    /* taille de l'emoji/icône */
     line-height: 1;
 }
 
@@ -737,6 +305,7 @@ main {
     padding: 0 .25rem;
 }
 
+/* Re-définition container / header / footer (conservées) */
 .container {
     max-width: 1100px;
     margin: 0 auto;
@@ -817,17 +386,14 @@ main {
 /* Taille du logo dans le header */
 .site-header .brand img {
     height: 50px;
-    /* ← passe de ~28px à 40px (ajuste 36–48 si tu veux) */
     width: auto;
     display: block;
-    /* évite l’espace bas de ligne */
 }
 
-/* Aligne un peu mieux verticalement si nécessaire */
 .site-header .brand {
     display: inline-flex;
     align-items: center;
-    gap: .6rem;
+    gap: .6rem
 }
 
 /* --- Form grid tidy ------------------------------------------------------- */
@@ -835,7 +401,6 @@ main {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
     gap: 1rem 1.25rem;
-    /* row / column gap */
     align-items: end;
 }
 
@@ -860,13 +425,10 @@ main {
 }
 
 /* pleine largeur */
-
-@media (max-width: 820px) {
+@media (max-width:820px) {
     .form-span-6 {
         grid-column: span 12;
     }
-
-    /* 1 colonne sur mobile */
 }
 
 /* Harmonisation rapide des champs */
@@ -881,4 +443,204 @@ main {
     border: 1px solid rgba(255, 255, 255, .15);
     background: rgba(255, 255, 255, .04);
     color: inherit;
+}
+
+/* ---- Make text fields always clickable (on top) ---- */
+label,
+.grid>* {
+    position: relative;
+}
+
+input,
+select,
+textarea {
+    position: relative;
+    z-index: 2;
+    /* pointer-events:auto; ← par défaut, pas nécessaire */
+}
+
+/* Wrapper des pickers (borne la zone de clic à l'input) */
+.input-with-picker {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    overflow: hidden;
+}
+
+.input-with-picker .picker-hit {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 42px;
+    z-index: 3;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    /* pointer-events:auto; ← pas requis */
+}
+
+/* Sécurité : aucun overlay global ne doit bloquer les champs */
+.card,
+.container,
+main {
+    position: relative;
+    z-index: 0;
+}
+
+/* Badges & chips / types --------------------------------------------------- */
+.badge--past {
+    background: #9ca3af;
+    color: #0b1220;
+    margin-left: 8px;
+}
+
+:root {
+    --type-meeting: #3b82f6;
+    /* bleu   */
+    --type-conference: #a78bfa;
+    /* violet */
+    --type-workshop: #f59e0b;
+    /* ambre  */
+    --type-personal: #22c55e;
+    /* vert   */
+    --type-other: #94a3b8;
+    /* gris   */
+}
+
+/* carte événement avec liseré coloré + glow au survol */
+.card.event {
+    border-left: 4px solid var(--type-other);
+    transition: box-shadow .2s ease, transform .15s ease, border-color .2s ease;
+}
+
+.card.event:hover {
+    box-shadow: 0 6px 26px rgba(37, 99, 235, .14);
+    transform: translateY(-1px);
+}
+
+/* variantes par type */
+.event--meeting {
+    border-left-color: var(--type-meeting);
+}
+
+.event--conference {
+    border-left-color: var(--type-conference);
+}
+
+.event--workshop {
+    border-left-color: var(--type-workshop);
+}
+
+.event--personal {
+    border-left-color: var(--type-personal);
+}
+
+/* chips (petits badges couleurs pour le type) */
+.chip {
+    display: inline-block;
+    font-size: 12px;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #1e293b;
+    border: 1px solid var(--line);
+    margin: 2px 0 8px;
+    opacity: .95;
+}
+
+/* 100 % valide: pas de color-mix() */
+.chip--meeting {
+    color: var(--type-meeting);
+    border-color: var(--type-meeting);
+}
+
+.chip--conference {
+    color: var(--type-conference);
+    border-color: var(--type-conference);
+}
+
+.chip--workshop {
+    color: var(--type-workshop);
+    border-color: var(--type-workshop);
+}
+
+.chip--personal {
+    color: var(--type-personal);
+    border-color: var(--type-personal);
+}
+
+/* past badge déjà existant, juste un peu plus doux */
+.badge--past {
+    background: #cbd5e1;
+    color: #0b1220;
+}
+
+/* Titres de section avec accent subtil */
+.section-title {
+    margin: 18px 4px 10px;
+    font-size: 18px;
+    opacity: .95;
+}
+
+.with-accent {
+    position: relative;
+    padding-left: 12px;
+}
+
+.with-accent::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 18px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, var(--brand), #0ea5e9);
+}
+
+.accent-gray::before {
+    background: linear-gradient(180deg, #94a3b8, #64748b);
+}
+
+/* petit switch "Hide past" */
+.switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    opacity: .9;
+}
+
+.switch input {
+    width: 18px;
+    height: 18px;
+}
+
+.muted {
+    opacity: .85
+}
+
+/* Accessibilité */
+.field-error {
+    color: #fca5a5;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+}
+
+:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+}
+
+/* Boutons un peu plus grands */
+.btn {
+    min-height: 36px
+}
+
+/* Petits helpers */
+.empty {
+    opacity: .85
 }

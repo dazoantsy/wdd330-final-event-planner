@@ -2,13 +2,51 @@
 <html lang="en">
 
 <head>
+    <!-- Early auth guard (UNCONDITIONAL on protected pages) -->
+    <script>
+        (function () {
+            // 1) Détection session Supabase valide (inclut la date d’expiration)
+            function hasValidSupabaseSession() {
+                try {
+                    var now = Math.floor(Date.now() / 1000);
+                    for (var i = 0; i < localStorage.length; i++) {
+                        var k = localStorage.key(i);
+                        if (!/^sb-.*-auth-token$/.test(k)) continue;
+                        var raw = localStorage.getItem(k);
+                        if (!raw) continue;
+                        var parsed = JSON.parse(raw);
+                        var s = (parsed && (parsed.currentSession || parsed.session || parsed)) || null;
+                        var token = s && s.access_token;
+                        var exp = (s && typeof s.expires_at === "number") ? s.expires_at : null;
+                        if (token && exp && exp > now) return true;
+                    }
+                } catch (_) { }
+                return false;
+            }
+
+            // 2) Cible: index.html à la racine du dépôt
+            //    - si la page est dans /event-planner/, on remonte 2 niveaux → "../../index.html"
+            //    - sinon, on reste au même niveau → "./index.html"
+            var inPlanner = location.pathname.indexOf('/event-planner/') !== -1;
+            var indexURL = inPlanner ? '../../index.html' : './index.html';
+
+            // 3) Ces pages SONT protégées (script inclus UNIQUEMENT sur pages protégées) → rediriger si non connecté
+            if (!hasValidSupabaseSession()) {
+                // replace() évite d'empiler l'historique
+                location.replace(indexURL);
+            }
+        })();
+    </script>
+
+
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Event Details</title>
     <link rel="stylesheet" href="../css/style.css" />
 </head>
 
-<body data-root="../" data-partials="" data-require-auth="true">
+<body data-require-auth="true" data-root="../" data-partials="">
     <header id="header"></header>
 
     <main class="container">

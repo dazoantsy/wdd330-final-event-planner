@@ -1,4 +1,6 @@
 // js/auth-page.js — Login / Signup / Reset avec gestion "Email not confirmed"
+// Corrige REDIRECT_URL pour GitHub Pages.  :contentReference[oaicite:1]{index=1}
+
 import { supabase } from "./api.js";
 
 const $ = (s) => document.querySelector(s);
@@ -9,9 +11,14 @@ const tabSignup = $("#tabSignup");
 const loginForm = $("#loginForm");
 const signupForm = $("#signupForm");
 
-// URL de retour sûre (utile pour reset/confirm)
-const REDIRECT_URL =
-    `${location.protocol.startsWith("http") ? location.origin : "http://localhost:5500"}/auth.html`;
+// Déduit le répertoire "racine" du dépôt GitHub Pages : "/<repo>/" ou "/"
+function repoBase() {
+    const parts = location.pathname.split("/").filter(Boolean);
+    return parts.length ? `/${parts[0]}/` : "/";
+}
+
+// URL absolue (reset/confirm) qui fonctionne en local ET sur GitHub Pages
+const REDIRECT_URL = `${location.origin}${repoBase()}auth.html`;
 
 function showMsg(text, type = "info") {
     if (!msg) return;
@@ -61,17 +68,18 @@ function ensureResendBtn(email) {
 loginForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     showMsg("Connexion…");
-    const email = $("#loginEmail").value.trim();
-    const password = $("#loginPassword").value;
+    const email = $("#loginEmail")?.value?.trim();
+    const password = $("#loginPassword")?.value;
 
     try {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         console.log("[auth] signIn ok:", data);
+        // depuis /auth.html à la racine du repo, ce relatif suffit :
         location.href = "event-planner/index.html";
     } catch (err) {
         const m = String(err?.message || "").toLowerCase();
-        if (m.includes("email not confirmed") || m.includes("email not confirmed")) {
+        if (m.includes("email not confirmed")) {
             showMsg("E-mail non confirmé. Clique le lien de confirmation reçu, ou renvoie le ci-dessous.", "error");
             ensureResendBtn(email);
             return;
@@ -82,7 +90,7 @@ loginForm?.addEventListener("submit", async (e) => {
 
 // --- Forgot password
 $("#forgotBtn")?.addEventListener("click", async () => {
-    const email = $("#loginEmail").value.trim();
+    const email = $("#loginEmail")?.value?.trim();
     if (!email) { showMsg("Entrez d’abord votre e-mail.", "error"); return; }
     try {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -100,9 +108,9 @@ signupForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     showMsg("Création du compte…");
 
-    const email = $("#signupEmail").value.trim();
-    const p1 = $("#signupPassword").value;
-    const p2 = $("#signupPassword2").value;
+    const email = $("#signupEmail")?.value?.trim();
+    const p1 = $("#signupPassword")?.value;
+    const p2 = $("#signupPassword2")?.value;
 
     if (p1 !== p2) return showMsg("Les mots de passe ne correspondent pas.", "error");
     if (p1.length < 6) return showMsg("Mot de passe ≥ 6 caractères.", "error");
@@ -118,11 +126,11 @@ signupForm?.addEventListener("submit", async (e) => {
         console.log("[auth] signUp ok:", data);
 
         if (!data.session) {
-            // Confirmation exigée (ton projet est configuré ainsi)
+            // Confirmation exigée : l’utilisateur doit cliquer le lien reçu
             showMsg("Inscription réussie. Confirme l’e-mail pour pouvoir te connecter.");
             ensureResendBtn(email);
         } else {
-            // (cas autoconfirm off) connecté immédiatement
+            // (cas autoconfirm désactivé) connecté immédiatement
             location.href = "event-planner/index.html";
         }
     } catch (err) {
@@ -133,7 +141,4 @@ signupForm?.addEventListener("submit", async (e) => {
 // Tabs + init
 tabLogin?.addEventListener("click", () => setTab("login"));
 tabSignup?.addEventListener("click", () => setTab("signup"));
-
-document.addEventListener("DOMContentLoaded", () => {
-    setTab("login");
-});
+document.addEventListener("DOMContentLoaded", () => setTab("login"));

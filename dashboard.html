@@ -2,13 +2,49 @@
 <html lang="en">
 
 <head>
+    <!-- Early auth guard: redirection immédiate + vérification d’expiration -->
+    <script>
+        (function () {
+            // Détermine la base du dépôt (local ou GitHub Pages)
+            var parts = location.pathname.split("/").filter(Boolean);
+            var base = (parts.length && /\.[a-z0-9]+$/i.test(parts[0])) ? "/" : ("/" + parts[0] + "/");
+            var indexURL = location.origin + base + "index.html";
+
+            function hasValidSupabaseSession() {
+                try {
+                    var now = Math.floor(Date.now() / 1000);
+                    for (var i = 0; i < localStorage.length; i++) {
+                        var k = localStorage.key(i);
+                        if (!/^sb-.*-auth-token$/.test(k)) continue;
+                        var raw = localStorage.getItem(k);
+                        if (!raw) continue;
+                        var parsed = JSON.parse(raw);
+                        var s = (parsed && (parsed.currentSession || parsed.session || parsed)) || null;
+                        var token = s && s.access_token;
+                        var exp = (s && typeof s.expires_at === "number") ? s.expires_at : null;
+                        if (token && exp && exp > now) return true; // session valide
+                    }
+                } catch (e) { /* ignore */ }
+                return false;
+            }
+
+            // Si la page nécessite une auth (voir data-require-auth sur <body>) et pas de session valide → redirection
+            var bodyNeedsAuth = (document.documentElement && document.documentElement.innerHTML.indexOf('data-require-auth="true"') !== -1)
+                || (document.body && document.body.getAttribute && document.body.getAttribute('data-require-auth') === 'true');
+
+            if (bodyNeedsAuth && !hasValidSupabaseSession()) {
+                location.replace(indexURL);
+            }
+        })();
+    </script>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard</title>
     <link rel="stylesheet" href="./css/style.css" />
 </head>
 
-<body data-partials="event-planner/">
+<body data-require-auth="true" data-partials="event-planner/">
     <header id="header"></header>
 
     <main class="container">
