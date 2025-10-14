@@ -182,7 +182,9 @@ form?.addEventListener("submit", async (e) => {
     .eq("id", id);
 
   if (error) { setStatus(error.message, "error"); return; }
-  window.location.href = `/event-planner/event-details.html?id=${encodeURIComponent(id)}`;
+
+  // ✅ redirection relative vers la page de détails
+  window.location.href = `./event-details.html?id=${encodeURIComponent(id)}`;
 });
 
 /* ---------- Météo ---------- */
