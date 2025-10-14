@@ -944,82 +944,72 @@ h1.page-title {
     }
 }
 
-/* ------------------------------ */
-/* Mobile hardening & fixes       */
-/* Append at the very end         */
-/* ------------------------------ */
+/* ---------------------------------------
+   Mobile header fixes (wrap + shrink)
+   --------------------------------------- */
 
-/* Prevent font auto-boost and random zoom on mobile */
+/* Avoid random font “zoom” that breaks layouts in in-app browsers */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
-/* Kill any horizontal scroll surprises */
+/* No horizontal scroll surprises */
 html, body { width: 100%; overflow-x: hidden; }
 *, *::before, *::after { box-sizing: border-box; }
-img, svg, video { max-width: 100%; height: auto; }
 
-/* If your email element is an id or a class, handle both */
-#user-email, .user-email {
-  max-width: 55vw;          /* don’t let the email push the header */
+/* Make the top bar wrap nicely on small screens */
+header, .header, .topbar, .appbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Logo a bit smaller on phones */
+.brand-logo { height: 28px; max-width: 140px; }
+
+/* Keep long emails from pushing everything off-screen */
+#user-email, .user-email, header .email, .header .email, .topbar .email, .appbar .email {
+  max-width: 55vw;           /* don’t let it take the whole row */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Cards & lists behave well in narrow widths */
-.list { padding-left: 0; }
-.event-card { width: 100%; }
+/* Buttons: allow them to shrink */
+.btn { min-width: 0; }
 
-/* Location blocks: clamp to 2 lines on small screens */
+/* Event/location blocks won’t cause vertical bloat */
 .event-loc {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 2;     /* max 2 lines on mobile */
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* Buttons don’t overflow */
-.btn { min-width: 0; }
-
-/* ---------- Mobile layout ---------- */
 @media (max-width: 640px) {
-  /* Header wraps nicely */
-  .appbar, .header, .topbar {       /* use the class that wraps your top nav */
+  /* Group buttons can wrap onto a new line */
+  .nav, .nav-primary, .header .nav, .topbar .nav, .appbar .nav {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    align-items: center;
   }
 
-  /* Nav buttons smaller */
-  .nav a.btn, .nav .btn {
-    padding: 10px 12px;
-    font-size: 16px;
+  /* Make the big pill buttons smaller on phones */
+  .nav .btn, .header .btn, .topbar .btn, .appbar .btn {
+    padding: 8px 12px;
+    font-size: 15px;
   }
 
-  /* Brand/logo smaller if needed */
-  .brand-logo { height: 28px; max-width: 140px; }
-
-  /* Put user email on its own line if it doesn’t fit */
-  #user-email, .user-email { order: 2; }
-
-  /* Cards: stack title/actions vertically */
+  /* Stack title + actions inside event cards */
   .event-head {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
+}
+Envoyé
+Écrire à Dazoantsy Ragodonandrasana
 
-  .event-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .event-actions .btn {
-    padding: 8px 12px;
-    font-size: 15px;
-  }
 
   /* Make sure inputs don’t overflow */
   input, select, textarea { max-width: 100%; }
