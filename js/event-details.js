@@ -168,13 +168,13 @@ import { formatDateRange, formatTimeRange } from "./events.js";
     }
 
 
-    if (btnEdit) btnEdit.href = `./event-planner/edit-event.html?id=${encodeURIComponent(id)}`;
+    if (btnEdit) btnEdit.href = `./edit-event.html?id=${encodeURIComponent(id)}`;
     if (btnDelete) {
       btnDelete.addEventListener("click", async () => {
         if (!confirm("Delete this event?")) return;
         const { error: delErr } = await supabase.from("events").delete().eq("id", id);
         if (delErr) { alert(delErr.message); return; }
-        location.href = `./event-planner/index.html`;
+        location.href = `./index.html`;
       });
     }
 
