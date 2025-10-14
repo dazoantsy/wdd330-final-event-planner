@@ -18,8 +18,8 @@ import { formatDateRange } from "./events.js";
   const cntMay = document.querySelector("#cnt-may");
   const cntDec = document.querySelector("#cnt-dec");
 
-  const toDetails = (id) => `./event-planner/event-details.html?id=${encodeURIComponent(id)}`;
-  const toEdit = (id) => `./event-planner/edit-event.html?id=${encodeURIComponent(id)}`;
+  const toDetails = (id) => `./event-details.html?id=${encodeURIComponent(id)}`;
+  const toEdit = (id) => `./edit-event.html?id=${encodeURIComponent(id)}`;
 
   // ----- Utils -----
   function buildCounts(invites) {
