@@ -3,6 +3,8 @@
 import { supabase } from "./api.js";
 import { formatDateRange, formatTimeRange } from "./events.js";
 
+const BASE = location.pathname.includes('/event-planner/') ? './' : './event-planner/';
+
 (function () {
   const $ = (sel) => document.querySelector(sel);
   const titleEl = $("#event-title");
@@ -39,7 +41,7 @@ import { formatDateRange, formatTimeRange } from "./events.js";
         btnBack.addEventListener("click", (e) => { e.preventDefault(); history.back(); });
       } else {
         // ✅ relatif depuis /event-planner/
-        btnBack.setAttribute("href", "./index.html");
+        btnBack.setAttribute('href', `${BASE}index.html`);
       }
     }
   }
@@ -169,13 +171,13 @@ import { formatDateRange, formatTimeRange } from "./events.js";
     }
 
     // ✅ Edit/Delete → chemins relatifs
-    if (btnEdit) btnEdit.href = `./edit-event.html?id=${encodeURIComponent(id)}`;
+    if (btnEdit) btnEdit.href = `${BASE}edit-event.html?id=${encodeURIComponent(id)}`;
     if (btnDelete) {
       btnDelete.addEventListener("click", async () => {
         if (!confirm("Delete this event?")) return;
         const { error: delErr } = await supabase.from("events").delete().eq("id", id);
         if (delErr) { alert(delErr.message); return; }
-        location.href = `./index.html`;
+        location.href = `${BASE}index.html`;
       });
     }
 
