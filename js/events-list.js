@@ -7,8 +7,8 @@ if (!list) console.warn("[EventsList] #events-list not found");
 
 function card(ev) {
   // liens explicites dans le dossier /event-planner/
-  const detailsURL = `/event-planner/event-details.html?id=${encodeURIComponent(ev.id)}`;
-  const editURL = `/event-planner/edit-event.html?id=${encodeURIComponent(ev.id)}`;
+  const detailsURL = `./event-details.html?id=${encodeURIComponent(ev.id)}`;
+  const editURL = `./edit-event.html?id=${encodeURIComponent(ev.id)}`;
   const date = formatDateRange(ev.start_date, ev.end_date);
   const time = ev.end_time ? ` • ${ev.end_time}` : "";
 
