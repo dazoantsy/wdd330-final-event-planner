@@ -18,6 +18,7 @@ import { formatDateRange } from "./events.js";
   const cntMay = document.querySelector("#cnt-may");
   const cntDec = document.querySelector("#cnt-dec");
 
+  // ✅ liens relatifs depuis /event-planner/
   const toDetails = (id) => `./event-details.html?id=${encodeURIComponent(id)}`;
   const toEdit = (id) => `./edit-event.html?id=${encodeURIComponent(id)}`;
 
