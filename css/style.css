@@ -731,12 +731,10 @@ footer .container {
     white-space: pre-line;
 
     /* Preferred (WebKit/Blink) */
+   overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-
-    /* Standard (spec; not fully supported everywhere yet) */
-    line-clamp: 2;
 
     /* Fallback (Firefox/older): approximate 2-line clamp */
     line-height: 1.2rem;
