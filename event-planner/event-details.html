@@ -2,121 +2,92 @@
 <html lang="en">
 
 <head>
-    <!-- Early auth guard (UNCONDITIONAL on protected pages) -->
-    <script>
-        (function () {
-            // 1) Détection session Supabase valide (inclut la date d’expiration)
-            function hasValidSupabaseSession() {
-                try {
-                    var now = Math.floor(Date.now() / 1000);
-                    for (var i = 0; i < localStorage.length; i++) {
-                        var k = localStorage.key(i);
-                        if (!/^sb-.*-auth-token$/.test(k)) continue;
-                        var raw = localStorage.getItem(k);
-                        if (!raw) continue;
-                        var parsed = JSON.parse(raw);
-                        var s = (parsed && (parsed.currentSession || parsed.session || parsed)) || null;
-                        var token = s && s.access_token;
-                        var exp = (s && typeof s.expires_at === "number") ? s.expires_at : null;
-                        if (token && exp && exp > now) return true;
-                    }
-                } catch (_) { }
-                return false;
-            }
-
-            // 2) Cible: index.html à la racine du dépôt
-            //    - si la page est dans /event-planner/, on remonte 2 niveaux → "../../index.html"
-            //    - sinon, on reste au même niveau → "./index.html"
-            var inPlanner = location.pathname.indexOf('/event-planner/') !== -1;
-            var indexURL = inPlanner ? '../../index.html' : './index.html';
-
-            // 3) Ces pages SONT protégées (script inclus UNIQUEMENT sur pages protégées) → rediriger si non connecté
-            if (!hasValidSupabaseSession()) {
-                // replace() évite d'empiler l'historique
-                location.replace(indexURL);
-            }
-        })();
-    </script>
-
-
-
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
+    <title>Event details — Event Planner</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Event Details</title>
     <link rel="stylesheet" href="../css/style.css" />
 </head>
 
-<body data-require-auth="true" data-root="../" data-partials="">
-    <header id="header"></header>
+<body>
+    <a href="#main" class="sr-only">Skip to main content</a>
 
-    <main class="container">
-        <!-- DETAILS -->
-        <section class="card" id="details">
-            <h2 id="title">(untitled)</h2>
-            <p id="when">—</p>
-            <p id="where"></p>
-            <p id="notes"></p>
+    <script>
+        (function () {
+            try {
+                var now = Math.floor(Date.now() / 1000);
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    if (!/^sb-.*-auth-token$/.test(k)) continue;
+                    var raw = localStorage.getItem(k); if (!raw) continue;
+                    var s = JSON.parse(raw); var ss = s.currentSession || s.session || s;
+                    var exp = typeof ss?.expires_at === "number" ? ss.expires_at : 0;
+                    if (exp > now) return;
+                }
+            } catch { }
+            location.replace("../index.html");
+        }());
+    </script>
 
-            <div class="row">
-                <a id="editLink" class="btn" href="./edit-event.html">Edit</a>
-                <button id="deleteBtn" class="btn" type="button">Delete</button>
+    <div id="__header"></div>
+
+    <main id="main" class="container" role="main" aria-labelledby="page-title">
+
+        <h1 id="event-title">Event</h1>
+        <p id="event-time" class="muted"></p>
+        <p id="event-location"></p>
+        <article id="event-notes" class="prose"></article>
+
+        <div class="row" style="gap:8px; margin-top:12px;">
+            <a id="btn-back" class="btn ghost" href="#">Back</a>
+            <a id="btn-edit" class="btn" href="#">Edit</a>
+            <button id="btn-delete" class="btn danger" type="button">Delete</button>
+            <a id="btn-gcal" class="btn" href="#" target="_blank" rel="noopener">Add to Google</a>
+            <a id="btn-ics" class="btn ghost" href="#">Download .ics</a>
+        </div>
+
+        <section id="guests" class="card" style="margin-top:16px;">
+            <h2>Guests</h2>
+
+            <!-- Vue organisateur : 4 listes -->
+            <div id="guests-owner" class="guests-buckets hidden">
+                <h3 class="sub">Pending <span id="gcnt-p"></span></h3>
+                <ul id="glist-p" class="list"></ul>
+
+                <h3 class="sub">Accepted <span id="gcnt-a"></span></h3>
+                <ul id="glist-a" class="list"></ul>
+
+                <h3 class="sub">Maybe <span id="gcnt-m"></span></h3>
+                <ul id="glist-m" class="list"></ul>
+
+                <h3 class="sub">Declined <span id="gcnt-d"></span></h3>
+                <ul id="glist-d" class="list"></ul>
             </div>
-        </section>
 
-        <!-- WEATHER -->
-        <section class="card">
-            <h3 class="with-accent">Weather</h3>
-            <div id="weatherBox" class="empty">No location set for this event.</div>
-        </section>
-
-        <!-- INVITE -->
-        <section class="card">
-            <h3>Invite someone</h3>
-            <form id="inviteForm" class="grid grid-2">
-                <label>Email to invite
-                    <input id="inviteEmail" type="email" placeholder="guest@example.com" required />
-                </label>
-                <div class="row" style="align-items:end">
-                    <button id="inviteBtn" class="btn primary" type="submit">Send invite</button>
+            <!-- Vue invité : ma réponse uniquement -->
+            <div id="guest-self" class="hidden">
+                <p>Your response: <span id="guest-self-status" class="badge">pending</span></p>
+                <div class="row" style="gap:8px;margin-top:6px;">
+                    <button class="btn sm" data-action="respond" data-status="accepted">Accept</button>
+                    <button class="btn sm ghost" data-action="respond" data-status="maybe">Maybe</button>
+                    <button class="btn sm danger" data-action="respond" data-status="declined">Decline</button>
                 </div>
-            </form>
-
-            <div id="inviteResult" class="hint" style="margin-top:.5rem"></div>
-            <div id="inviteActions" class="row" style="display:none">
-                <button id="copyInvite" class="btn" type="button">Copy link</button>
-                <a id="mailtoInvite" class="btn" target="_blank" rel="noopener">Open email app</a>
+                <p class="muted" id="guest-self-msg" style="margin-top:6px;"></p>
             </div>
         </section>
 
-        <!-- RSVP -->
-        <section class="card">
-            <h3>RSVP</h3>
-            <form id="rsvpForm" class="grid grid-2">
-                <label>Status
-                    <select name="status">
-                        <option value="yes">Yes</option>
-                        <option value="maybe">Maybe</option>
-                        <option value="no">No</option>
-                    </select>
-                </label>
-                <label>Guests <input name="guests" type="number" min="1" value="1" /></label>
-                <label>Email (optional if signed in) <input name="email" type="email"
-                        placeholder="guest@example.com" /></label>
-                <label>Note <input name="note" /></label>
-                <div class="row"><button class="btn primary" type="submit">Save RSVP</button></div>
-            </form>
 
-            <h3>Responses</h3>
-            <div id="rsvpList" class="card"></div>
-        </section>
+        <p id="details-error" class="status error"></p>
     </main>
 
-    <footer id="footer"></footer>
-    <script src="../js/headerFooter.js"></script>
+    <div id="__footer"></div>
 
-    <script type="module" src="../js/api.js"></script>
-    <script type="module" src="../js/auth.js"></script>
-    <script type="module" src="../js/event-details.js"></script>
+    <script type="module">
+        import { loadPartials } from "../js/load-partials.js";
+        await loadPartials();
+        await import("../js/auth.js");
+        await import("../js/header-logo.js");
+        await import("../js/event-details.js");
+    </script>
 </body>
 
 </html>

@@ -1,6 +1,6 @@
-// /js/event-edit.js — corrections: pas de collision avec window.location + suggestions lieu
+// /js/create-event.js
 import { supabase, getUserOrNull } from "./api.js";
-import { toDbTimestampLocal, fromDbToLocalInput } from "./date-helpers.js";
+import { toDbTimestampLocal } from "./date-helpers.js";
 
 // --- Weather helpers (WMO -> English text + emoji) ---
 function weatherCodeToText(code) {
@@ -59,9 +59,6 @@ function formatWeather(tempC, code) {
   return `${emo} ${t} • ${txt}`;
 }
 
-const params = new URLSearchParams(location.search);
-const eventId = params.get("id");
-
 const form = document.querySelector("#form");
 const statusEl = document.querySelector("#status");
 const titleEl = document.querySelector("#title");
@@ -96,11 +93,8 @@ function setStatus(msg, kind = "info") {
   }
 }
 
-function debounce(fn, ms = 350) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
-
-function getId() {
-  const p = new URLSearchParams(location.search).get("id");
-  return p && p.trim() ? p.trim() : null;
+function debounce(fn, ms = 350) {
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
 /* ---------- Validation minimale (HTML5) ---------- */
@@ -135,28 +129,7 @@ async function searchPlaces(q) {
 }
 locEl?.addEventListener("input", debounce(() => searchPlaces(locEl.value.trim()), 350));
 
-/* ---------- Chargement de l'événement ---------- */
-async function load() {
-  const user = await getUserOrNull();
-  if (!user) { window.location.replace("../index.html"); return; }
-  const id = getId();
-  if (!id) { setStatus("Missing event id in URL.", "error"); return; }
-
-  const { data, error } = await supabase.from("events").select("*").eq("id", id).single();
-  if (error || !data) { setStatus(error?.message || "Event not found or not accessible.", "error"); return; }
-
-  titleEl.value = data.title || "";
-  startEl.value = fromDbToLocalInput(data.start_date);
-  endEl.value = fromDbToLocalInput(data.end_date);
-  locEl.value = data.location || "";
-  descEl.value = data.description || "";
-
-  // stocke l'id sur le formulaire pour l'update
-  form.dataset.eid = id;
-}
-document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", load) : load();
-
-/* ---------- Sauvegarde ---------- */
+/* ---------- Création ---------- */
 form?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -164,25 +137,33 @@ form?.addEventListener("submit", async (e) => {
   validateEndAfterStart();
   if (!form.checkValidity()) { form.reportValidity(); return; }
 
-  const id = form?.dataset?.eid || getId();
-  if (!id) { setStatus("Missing event id.", "error"); return; }
+  const user = await getUserOrNull();
+  if (!user) { setStatus("Not signed in", "error"); return; }
+
+  const title = titleEl.value.trim();
+  const start = toDbTimestampLocal(startEl.value);
+  const end = toDbTimestampLocal(endEl.value);
+  let place = (locEl.value || "").trim();        // ⚠️ ne pas nommer "location" pour ne pas écraser window.location
+  const description = (descEl.value || "").trim();
 
   setStatus("Saving...");
-  const place = (locEl.value || "").trim();
-
-  const { error } = await supabase
+  const { data: inserted, error } = await supabase
     .from("events")
-    .update({
-      title: (titleEl.value || "").trim(),
-      description: (descEl.value || "").trim(),
-      location: place,
-      start_date: toDbTimestampLocal(startEl.value),
-      end_date: toDbTimestampLocal(endEl.value),
+    .insert({
+      user_id: user.id,
+      title,
+      description,
+      location: place,     // (ne pas renommer)
+      start_date: start,
+      end_date: end,
+      end_time: ""
     })
-    .eq("id", id);
+    .select("id")
+    .single();
 
   if (error) { setStatus(error.message, "error"); return; }
-  window.location.href = `/event-planner/event-details.html?id=${encodeURIComponent(id)}`;
+  try { localStorage.setItem("last_insert_id", inserted?.id || ""); } catch { }
+  window.location.href = "./index.html";
 });
 
 /* ---------- Météo ---------- */

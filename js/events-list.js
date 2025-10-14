@@ -1,119 +1,59 @@
-// js/events-list.js — Events list (owner ∪ RSVP) + filtres
-import { requireAuthIfNeeded } from "./auth.js";
-import { listEvents, listMyEvents, claimRsvpsForUser } from "./db.js";
-import { formatDate, normalizeEvent } from "./events.js";
+// /js/events-list.js — clean layout + actions
+import { supabase } from "./api.js";
+import { formatDateRange } from "./events.js";
 
-const $ = (s, r = document) => r.querySelector(s);
+const list = document.getElementById("events-list");
+if (!list) console.warn("[EventsList] #events-list not found");
 
-// ——— Card
-function toCard(e) {
-    const ev = normalizeEvent(e);
-    const when = `${formatDate(ev.startDate)}${ev.time ? " • " + ev.time : ""}`;
-    return `
-    <h3>${ev.title || "(Untitled)"}</h3>
-    <p>${when}</p>
-    ${ev.location ? `<p>${ev.location}</p>` : ""}
-    <div class="row">
-      <a class="btn" href="./event-details.html?id=${encodeURIComponent(ev.id)}">View</a>
-      <a class="btn" href="./edit-event.html?id=${encodeURIComponent(ev.id)}">Edit</a>
-    </div>
+function card(ev) {
+  // liens explicites dans le dossier /event-planner/
+  const detailsURL = `/event-planner/event-details.html?id=${encodeURIComponent(ev.id)}`;
+  const editURL = `/event-planner/edit-event.html?id=${encodeURIComponent(ev.id)}`;
+  const date = formatDateRange(ev.start_date, ev.end_date);
+  const time = ev.end_time ? ` • ${ev.end_time}` : "";
+
+  return `
+    <li class="event-card" data-id="${ev.id}">
+      <div class="event-head">
+        <a class="event-title" href="${detailsURL}">${ev.title || "Untitled"}</a>
+        <div class="event-actions">
+          <a class="btn sm" href="${detailsURL}">View</a>
+          <a class="btn sm ghost" href="${editURL}">Edit</a>
+          <button class="btn sm danger" data-action="delete" data-id="${ev.id}">Delete</button>
+        </div>
+      </div>
+      <div class="event-meta">${date}${time}</div>
+      <div class="event-loc">${ev.location || ""}</div>
+    </li>
   `;
 }
 
-function renderEmpty(container, msg = "No events yet.") {
-    container.innerHTML = `<li class="empty">${msg}</li>`;
+
+async function load() {
+  const { data, error } = await supabase
+    .from("events")
+    .select("id,title,location,start_date,end_date,end_time")
+    .order("start_date", { ascending: true }); // RLS filtre côté serveur
+
+  if (error) { list.innerHTML = `<li class="error">${error.message}</li>`; return; }
+  if (!data || data.length === 0) { list.innerHTML = `<li class="muted">No events found.</li>`; return; }
+
+  list.innerHTML = data.map(card).join("");
+
+  // Delete (delegation)
+  list.addEventListener("click", async (e) => {
+    const btn = e.target.closest('[data-action="delete"]');
+    if (!btn) return;
+    const id = btn.getAttribute("data-id");
+    if (!id) return;
+    if (!confirm("Delete this event?")) return;
+
+    btn.disabled = true;
+    const { error: delErr } = await supabase.from("events").delete().eq("id", id);
+    if (delErr) { alert(delErr.message); btn.disabled = false; return; }
+    list.querySelector(`.event-card[data-id="${id}"]`)?.remove();
+    if (!list.querySelector(".event-card")) list.innerHTML = `<li class="muted">No events found.</li>`;
+  });
 }
 
-function splitPastUpcoming(list) {
-    const now = new Date();
-    const up = [], past = [];
-    (list || []).forEach(e => {
-        const d = new Date(e.start_date || e.date || e.startDate || Date.now());
-        (d >= now ? up : past).push(e);
-    });
-    past.sort((a, b) => new Date(b.start_date || b.date) - new Date(a.start_date || a.date));
-    up.sort((a, b) => new Date(a.start_date || a.date) - new Date(b.start_date || b.date));
-    return { past, up };
-}
-
-function renderList(containerPast, containerUp, list) {
-    const { past, up } = splitPastUpcoming(list);
-
-    if (!up.length) renderEmpty(containerUp, "Nothing upcoming.");
-    else {
-        containerUp.innerHTML = "";
-        up.forEach(e => {
-            const li = document.createElement("li");
-            li.className = "card";
-            li.innerHTML = toCard(e);
-            containerUp.appendChild(li);
-        });
-    }
-
-    if (!past.length) renderEmpty(containerPast, "No past events.");
-    else {
-        containerPast.innerHTML = "";
-        past.forEach(e => {
-            const li = document.createElement("li");
-            li.className = "card";
-            li.innerHTML = toCard(e);
-            containerPast.appendChild(li);
-        });
-    }
-}
-
-function applyFilters(list, q, type) {
-    let out = list || [];
-    if (q) {
-        const s = q.toLowerCase();
-        out = out.filter(e =>
-            (e.title || "").toLowerCase().includes(s) ||
-            (e.location || "").toLowerCase().includes(s)
-        );
-    }
-    if (type) out = out.filter(e => (e.type || "") === type);
-    return out;
-}
-
-// ——— Boot
-async function boot() {
-    await requireAuthIfNeeded();
-
-    const ulPast = document.querySelector("#eventsPast");
-    const ulUp = document.querySelector("#eventsUpcoming");
-    if (!ulPast || !ulUp) return;
-
-    ulPast.innerHTML = `<li class="empty">Loading…</li>`;
-    ulUp.innerHTML = `<li class="empty">Loading…</li>`;
-
-    let data = [];
-
-    try {
-        await claimRsvpsForUser();
-
-        // 1) rapide cache (owner)
-        data = await listEvents();
-        renderList(ulPast, ulUp, data);
-
-        // 2) complet (owner ∪ RSVP)
-        const server = await listMyEvents();
-        renderList(ulPast, ulUp, server);
-        data = server;
-    } catch (e) {
-        console.error(e);
-        renderEmpty(ulPast, "Failed to load.");
-        renderEmpty(ulUp, "Failed to load.");
-    }
-
-    const search = $("#search");
-    const typeSel = $("#type");
-    const rerender = () => {
-        const q = search?.value?.trim() || "";
-        const t = typeSel?.value || "";
-        renderList(ulPast, ulUp, applyFilters(data, q, t));
-    };
-    search?.addEventListener("input", rerender);
-    typeSel?.addEventListener("change", rerender);
-}
-
-window.addEventListener("DOMContentLoaded", boot);
+document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", load) : load();

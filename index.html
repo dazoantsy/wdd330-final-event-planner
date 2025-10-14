@@ -2,31 +2,47 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
+    <title>Event Planner — Home</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Event Planner</title>
     <link rel="stylesheet" href="./css/style.css" />
+    <meta name="color-scheme" content="dark light" />
 </head>
 
-<body data-partials="event-planner/">
-    <header id="header"></header>
+<body>
+    <div id="__header"></div>
 
     <main class="container">
+        <h1>Welcome to Event Planner</h1>
+        <p class="muted">Sign in to start planning your events.</p>
+
         <section class="card">
-            <h1>Welcome to Event Planner</h1>
-            <p>Plan, track, and share your events effortlessly.</p>
-            <div class="row">
-                <a class="btn primary" href="./auth.html">Sign in / Sign up</a>
-                <a class="btn" href="./event-planner/index.html">View Events</a>
-            </div>
+            <h2>Sign in / Sign up</h2>
+            <form id="auth-form" class="form">
+                <label>Email
+                    <input id="auth-email" type="email" required placeholder="you@example.com" autocomplete="email" />
+                </label>
+                <label>Password
+                    <input id="auth-password" type="password" required autocomplete="current-password" />
+                </label>
+                <div class="row">
+                    <button id="btn-signin" type="button" class="btn">Sign in</button>
+                    <button id="btn-signup" type="button" class="btn ghost">Sign up</button>
+                </div>
+                <p id="auth-status" class="status"></p>
+            </form>
         </section>
     </main>
 
-    <footer id="footer"></footer>
-    <script src="./js/headerFooter.js"></script>
-    <script type="module" src="./js/api.js"></script>
-    <script type="module" src="./js/auth.js"></script>
-    <script type="module" src="./js/main.js"></script>
+    <div id="__footer"></div>
+
+    <script type="module">
+        import { loadPartials } from "./js/load-partials.js";
+        await loadPartials();
+        await import("./js/auth.js");
+        await import("./js/header-logo.js");
+        await import("./js/auth-page.js");
+    </script>
 </body>
 
 </html>

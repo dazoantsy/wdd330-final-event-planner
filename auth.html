@@ -2,83 +2,44 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
+    <title>Auth — Event Planner</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Sign in / Sign up</title>
     <link rel="stylesheet" href="./css/style.css" />
 </head>
 
-<body data-root="event-planner/">
-    <header id="header"></header>
+<body>
+    <div id="__header"></div>
 
     <main class="container">
+        <h1>Authentication</h1>
         <section class="card">
-            <h2>Welcome 👋</h2>
-            <p>Sign in to access your events. Don’t have an account? Create one below.</p>
-
-            <form id="authForm" class="grid">
-                <label>Email <input id="email" type="email" required /></label>
-                <label>Password <input id="password" type="password" required /></label>
+            <form id="auth-form" class="form">
+                <label>Email
+                    <input id="auth-email" type="email" required />
+                </label>
+                <label>Password
+                    <input id="auth-password" type="password" required />
+                </label>
                 <div class="row">
-                    <button class="btn primary" id="btnSignIn" type="button">Sign in</button>
-                    <button class="btn" id="btnSignUp" type="button">Create account</button>
-                    <button class="btn" id="btnReset" type="button">Forgot password</button>
+                    <button id="btn-signin" type="button" class="btn">Sign in</button>
+                    <button id="btn-signup" type="button" class="btn ghost">Sign up</button>
+                    <button id="btn-reset" type="button" class="btn ghost">Reset password</button>
                 </div>
-                <small id="authMsg" class="hint" role="status" aria-live="polite"></small>
+                <p id="auth-status" class="status"></p>
             </form>
         </section>
     </main>
 
-    <footer id="footer"></footer>
-    <script src="./js/headerFooter.js"></script>
+    <div id="__footer"></div>
 
     <script type="module">
-        import { supabase } from "./js/api.js";
-
-        const $ = (s) => document.querySelector(s);
-        const msg = $("#authMsg");
-        const DEST = () => "./event-planner/index.html";
-
-        function setMsg(t) { msg.textContent = t || ""; }
-
-        async function signIn() {
-            setMsg("Signing in…");
-            const { error } = await supabase.auth.signInWithPassword({
-                email: $("#email").value.trim(),
-                password: $("#password").value
-            });
-            if (error) return setMsg("Sign in error: " + error.message);
-            setMsg("Signed in. Redirecting…");
-            window.location.replace(DEST());
-        }
-
-        async function signUp() {
-            setMsg("Creating account…");
-            const { error } = await supabase.auth.signUp({
-                email: $("#email").value.trim(),
-                password: $("#password").value
-            });
-            if (error) return setMsg("Sign up error: " + error.message);
-            setMsg("Sign up successful. Please check your email to confirm.");
-        }
-
-        async function reset() {
-            setMsg("Sending reset email…");
-            const { error } = await supabase.auth.resetPasswordForEmail($("#email").value.trim(), {
-                redirectTo: window.location.origin + "/auth.html"
-            });
-            if (error) return setMsg("Reset error: " + error.message);
-            setMsg("Reset link sent. Please check your inbox.");
-        }
-
-        supabase.auth.onAuthStateChange((_e, session) => {
-            if (session?.user) window.location.replace(DEST());
-        });
-
-        $("#btnSignIn").addEventListener("click", signIn);
-        $("#btnSignUp").addEventListener("click", signUp);
-        $("#btnReset").addEventListener("click", reset);
+        import { loadPartials } from "./js/load-partials.js";
+        await loadPartials();
+        await import("./js/auth.js");
+        await import("./js/auth-page.js");
     </script>
+
 </body>
 
 </html>

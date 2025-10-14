@@ -1,126 +1,85 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <!-- Early auth guard (UNCONDITIONAL on protected pages) -->
-    <script>
-        (function () {
-            // 1) Détection session Supabase valide (inclut la date d’expiration)
-            function hasValidSupabaseSession() {
-                try {
-                    var now = Math.floor(Date.now() / 1000);
-                    for (var i = 0; i < localStorage.length; i++) {
-                        var k = localStorage.key(i);
-                        if (!/^sb-.*-auth-token$/.test(k)) continue;
-                        var raw = localStorage.getItem(k);
-                        if (!raw) continue;
-                        var parsed = JSON.parse(raw);
-                        var s = (parsed && (parsed.currentSession || parsed.session || parsed)) || null;
-                        var token = s && s.access_token;
-                        var exp = (s && typeof s.expires_at === "number") ? s.expires_at : null;
-                        if (token && exp && exp > now) return true;
-                    }
-                } catch (_) { }
-                return false;
-            }
-
-            // 2) Cible: index.html à la racine du dépôt
-            //    - si la page est dans /event-planner/, on remonte 2 niveaux → "../../index.html"
-            //    - sinon, on reste au même niveau → "./index.html"
-            var inPlanner = location.pathname.indexOf('/event-planner/') !== -1;
-            var indexURL = inPlanner ? '../../index.html' : './index.html';
-
-            // 3) Ces pages SONT protégées (script inclus UNIQUEMENT sur pages protégées) → rediriger si non connecté
-            if (!hasValidSupabaseSession()) {
-                // replace() évite d'empiler l'historique
-                location.replace(indexURL);
-            }
-        })();
-    </script>
-
-
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Edit Event</title>
+    <meta charset="UTF-8" />
+    <title>Edit event — Event Planner</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link rel="stylesheet" href="../css/style.css" />
 </head>
 
-<body data-require-auth="true" data-root="../" data-partials="">
-    <header id="header"></header>
+<body>
+    <a href="#main" class="sr-only">Skip to main content</a>
 
-    <main class="container">
-        <form id="eventForm" class="card">
-            <!-- Bloc haut du formulaire : propre et aligné -->
-            <div class="form-grid">
-                <!-- Title -->
-                <div class="field form-span-6">
-                    <label for="title">Title</label>
-                    <input id="title" name="title" type="text" placeholder="Event title">
-                </div>
-        
-                <!-- Type -->
-                <div class="field form-span-6">
-                    <label for="type">Type</label>
-                    <select id="type" name="type">
-                        <option value="">—</option>
-                        <option>Conference</option>
-                        <option>Meetup</option>
-                        <option>Workshop</option>
-                        <option>Birthday</option>
-                        <option>Other</option>
-                    </select>
-                </div>
-        
-                <!-- Start date -->
-                <div class="field form-span-6">
-                    <label for="start_date">Start date</label>
-                    <input id="start_date" name="start_date" type="date" placeholder="yyyy-mm-dd">
-                </div>
-        
-                <!-- End date -->
-                <div class="field form-span-6">
-                    <label for="end_date">End date</label>
-                    <input id="end_date" name="end_date" type="date" placeholder="yyyy-mm-dd">
-                </div>
-        
-                <!-- Start time -->
-                <div class="field form-span-6">
-                    <label for="time">Start time</label>
-                    <input id="time" name="time" type="time" placeholder="--:--">
-                </div>
-        
-                <!-- End time -->
-                <div class="field form-span-6">
-                    <label for="end_time">End time</label>
-                    <input id="end_time" name="end_time" type="time" placeholder="--:--">
-                </div>
-            </div>
-        
-            <div class="row">
-                <label style="flex:1">Location
-                    <input id="location" name="location" type="text" placeholder="Search a place…" />
-                </label>
-                <button id="weatherBtn" type="button" class="btn">Weather</button>
-            </div>
-        
-            <label>Notes
-                <textarea id="notes" name="notes" rows="4" placeholder="Details, agenda, etc."></textarea>
+    <script>
+        (function () {
+            try {
+                var now = Math.floor(Date.now() / 1000);
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    if (!/^sb-.*-auth-token$/.test(k)) continue;
+                    var raw = localStorage.getItem(k); if (!raw) continue;
+                    var s = JSON.parse(raw); var ss = s.currentSession || s.session || s;
+                    var exp = typeof ss?.expires_at === "number" ? ss.expires_at : 0;
+                    if (exp > now) return;
+                }
+            } catch { }
+            location.replace("../index.html");
+        }());
+    </script>
+
+    <div id="__header"></div>
+
+    <main id="main" class="container" role="main" aria-labelledby="page-title">
+
+        <h1 id="page-title">Edit event</h1>
+
+        <form id="form" class="form" autocomplete="off">
+            <label>Title
+                <input id="title" type="text" required />
             </label>
-        
-            <div class="row">
-                <button id="saveBtn" class="btn primary" type="submit">Save</button>
-                <a class="btn" href="./index.html">Cancel</a>
+
+            <div class="row" style="display:flex; gap:8px; align-items:end">
+                <label style="flex:1">Start
+                    <input id="start" type="datetime-local" required />
+                </label>
+                <label style="flex:1">End
+                    <input id="end" type="datetime-local" />
+                </label>
             </div>
+
+            <label>Location
+                <input id="location" type="text" list="loc-suggestions" placeholder="City, place..." required />
+                <datalist id="loc-suggestions"></datalist>
+            </label>
+
+            <label>Description
+                <textarea id="description" rows="4"></textarea>
+            </label>
+
+            <div class="row">
+                <button id="submit" type="submit" class="btn">Save changes</button>
+                <a id="back" href="./index.html" class="btn ghost">Back</a>
+            </div>
+
+            <p id="status" class="status" role="status" aria-live="polite"></p>
+
+
+            <div class="muted" id="weather-box"></div>
+            <button id="weather-btn" type="button" class="btn ghost">Check weather</button>
         </form>
     </main>
 
-    <footer id="footer"></footer>
-    <script src="../js/headerFooter.js"></script>
+    <div id="__footer"></div>
 
-    <!-- Scripts -->
-    <script type="module" src="../js/api.js"></script>
-    <script type="module" src="../js/auth.js"></script>
-    <script type="module" src="../js/event-edit.js"></script>
+    <script type="module">
+        import { loadPartials } from "../js/load-partials.js";
+        await loadPartials();
+        await import("../js/auth.js");
+        await import("../js/header-logo.js");
+        await import("../js/event-edit.js");
+    </script>
+
 </body>
 
 </html>

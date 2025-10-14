@@ -9,9 +9,7 @@
 </head>
 
 <body>
-    <header class="container">
-        <h1>Invitation</h1>
-    </header>
+    <div id="__header"></div>
 
     <main class="container">
         <section class="card">
@@ -20,13 +18,18 @@
         </section>
     </main>
 
-    <footer id="footer"></footer>
-    <script src="../js/headerFooter.js"></script>
+    <div id="__footer"></div>
 
     <!-- Scripts -->
-    <script type="module" src="../js/api.js"></script>
-    <script type="module" src="../js/auth.js"></script>
-    <script type="module" src="../js/accept.js"></script>
+    <script type="module">
+        import { loadPartials } from "../js/load-partials.js";
+        await loadPartials();
+        // puis tes imports existants :
+        await import("../js/api.js");
+        await import("../js/auth.js");
+        await import("../js/header-logo.js");
+        await import("../js/accept.js");
+    </script>
 </body>
 
 </html>

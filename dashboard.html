@@ -2,62 +2,75 @@
 <html lang="en">
 
 <head>
-    <!-- Early auth guard: redirection immédiate + vérification d’expiration -->
-    <script>
-        (function () {
-            // Détermine la base du dépôt (local ou GitHub Pages)
-            var parts = location.pathname.split("/").filter(Boolean);
-            var base = (parts.length && /\.[a-z0-9]+$/i.test(parts[0])) ? "/" : ("/" + parts[0] + "/");
-            var indexURL = location.origin + base + "index.html";
-
-            function hasValidSupabaseSession() {
-                try {
-                    var now = Math.floor(Date.now() / 1000);
-                    for (var i = 0; i < localStorage.length; i++) {
-                        var k = localStorage.key(i);
-                        if (!/^sb-.*-auth-token$/.test(k)) continue;
-                        var raw = localStorage.getItem(k);
-                        if (!raw) continue;
-                        var parsed = JSON.parse(raw);
-                        var s = (parsed && (parsed.currentSession || parsed.session || parsed)) || null;
-                        var token = s && s.access_token;
-                        var exp = (s && typeof s.expires_at === "number") ? s.expires_at : null;
-                        if (token && exp && exp > now) return true; // session valide
-                    }
-                } catch (e) { /* ignore */ }
-                return false;
-            }
-
-            // Si la page nécessite une auth (voir data-require-auth sur <body>) et pas de session valide → redirection
-            var bodyNeedsAuth = (document.documentElement && document.documentElement.innerHTML.indexOf('data-require-auth="true"') !== -1)
-                || (document.body && document.body.getAttribute && document.body.getAttribute('data-require-auth') === 'true');
-
-            if (bodyNeedsAuth && !hasValidSupabaseSession()) {
-                location.replace(indexURL);
-            }
-        })();
-    </script>
-
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
+    <title>Dashboard — Event Planner</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Dashboard</title>
     <link rel="stylesheet" href="./css/style.css" />
 </head>
 
-<body data-require-auth="true" data-partials="event-planner/">
-    <header id="header"></header>
+<body>
+    <a href="#main" class="sr-only">Skip to main content</a>
 
-    <main class="container">
-        <h2>Dashboard</h2>
-        <div id="stats" class="cards"></div>
+    <script>
+        // Early auth guard (évite d’afficher la page si pas logué)
+        (function () {
+            try {
+                var now = Math.floor(Date.now() / 1000);
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    if (!/^sb-.*-auth-token$/.test(k)) continue;
+                    var raw = localStorage.getItem(k); if (!raw) continue;
+                    var s = JSON.parse(raw);
+                    var ss = s.currentSession || s.session || s;
+                    var exp = typeof ss?.expires_at === "number" ? ss.expires_at : 0;
+                    if (exp > now) return; // OK
+                }
+            } catch { }
+            location.replace("./index.html");
+        }());
+    </script>
+
+    <div id="__header"></div>
+
+    <main id="main" class="container" role="main" aria-labelledby="page-title">
+
+        <h1 id="page-title">Dashboard</h1>
+
+        <section class="card">
+            <h2>My events <small id="count-my-events" class="muted"></small></h2>
+            <ul id="list-my-events" class="list"></ul>
+        </section>
+
+        <section class="card">
+            <h2>Pending Invitations</h2>
+            <ul id="list-my-invites" class="list"></ul>
+        </section>
+
+        <section class="card">
+            <h2>Invitations for Me</h2>
+            <div id="inv-me">
+                <h3 class="sub">Accepted <span id="cnt-acc"></span></h3>
+                <ul id="list-inv-me-accepted" class="list"></ul>
+            
+                <h3 class="sub">Maybe <span id="cnt-may"></span></h3>
+                <ul id="list-inv-me-maybe" class="list"></ul>
+            
+                <h3 class="sub">Declined <span id="cnt-dec"></span></h3>
+                <ul id="list-inv-me-declined" class="list"></ul>
+            </div>
+        </section>
     </main>
 
-    <footer id="footer"></footer>
-    <script src="./js/headerFooter.js"></script>
+    <div id="__footer"></div>
 
-    <script type="module" src="./js/api.js"></script>
-    <script type="module" src="./js/auth.js"></script>
-    <script type="module" src="./js/dashboard.js"></script>
+    <script type="module">
+        import { loadPartials } from "./js/load-partials.js";
+        await loadPartials();
+        await import("./js/auth.js");
+        await import("./js/header-logo.js");
+        await import("./js/dashboard.js");
+    </script>
+
 </body>
 
 </html>
