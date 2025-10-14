@@ -1005,10 +1005,3 @@ header, .header, .topbar, .appbar {
     gap: 10px;
   }
 }
-Envoyé
-Écrire à Dazoantsy Ragodonandrasana
-
-
-  /* Make sure inputs don’t overflow */
-  input, select, textarea { max-width: 100%; }
-}
