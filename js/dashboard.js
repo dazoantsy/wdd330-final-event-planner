@@ -2,6 +2,10 @@
 import { supabase, getUserOrNull } from "./api.js";
 import { formatDateRange } from "./events.js";
 
+// Robust relative base (works from repo root or /event-planner/)
+const BASE = location.pathname.includes('/event-planner/') ? './' : './event-planner/';
+
+
 (function () {
   // ----- DOM -----
   const myEventsList = document.querySelector("#list-my-events");
@@ -19,8 +23,9 @@ import { formatDateRange } from "./events.js";
   const cntDec = document.querySelector("#cnt-dec");
 
   // ✅ liens relatifs depuis /event-planner/
-  const toDetails = (id) => `./event-details.html?id=${encodeURIComponent(id)}`;
-  const toEdit = (id) => `./edit-event.html?id=${encodeURIComponent(id)}`;
+  const toDetails = (id) => `${BASE}event-details.html?id=${encodeURIComponent(id)}`;
+  const toEdit    = (id) => `${BASE}edit-event.html?id=${encodeURIComponent(id)}`;
+
 
   // ----- Utils -----
   function buildCounts(invites) {
@@ -50,8 +55,8 @@ import { formatDateRange } from "./events.js";
 
           </a>
           <div class="event-actions">
-            <a class="btn sm" href="${toDetails(ev.id)}">View</a>
-            <a class="btn sm ghost" href="${toEdit(ev.id)}">Edit</a>
+            <a class="btn sm" href="${BASE}event-details.html?id=${encodeURIComponent(ev.id)}">View</a>
+            <a class="btn sm ghost" href="${BASE}edit-event.html?id=${encodeURIComponent(ev.id)}">Edit</a>
             <button class="btn sm" data-action="invite" data-id="${ev.id}">Invite people</button>
             <button class="btn sm danger" data-action="delete" data-id="${ev.id}">Delete</button>
           </div>
