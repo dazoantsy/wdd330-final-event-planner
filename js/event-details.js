@@ -38,7 +38,8 @@ import { formatDateRange, formatTimeRange } from "./events.js";
       if (sameApp && window.history.length > 1) {
         btnBack.addEventListener("click", (e) => { e.preventDefault(); history.back(); });
       } else {
-        btnBack.setAttribute("href", "/event-planner/index.html");
+        // ✅ relatif depuis /event-planner/
+        btnBack.setAttribute("href", "./index.html");
       }
     }
   }
@@ -167,7 +168,7 @@ import { formatDateRange, formatTimeRange } from "./events.js";
       });
     }
 
-
+    // ✅ Edit/Delete → chemins relatifs
     if (btnEdit) btnEdit.href = `./edit-event.html?id=${encodeURIComponent(id)}`;
     if (btnDelete) {
       btnDelete.addEventListener("click", async () => {
