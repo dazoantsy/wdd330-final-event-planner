@@ -2,13 +2,15 @@
 import { supabase } from "./api.js";
 import { formatDateRange } from "./events.js";
 
+const BASE = location.pathname.includes('/event-planner/') ? './' : './event-planner/';
+
 const list = document.getElementById("events-list");
 if (!list) console.warn("[EventsList] #events-list not found");
 
 function card(ev) {
   // liens explicites dans le dossier /event-planner/
-  const detailsURL = `./event-details.html?id=${encodeURIComponent(ev.id)}`;
-  const editURL = `./edit-event.html?id=${encodeURIComponent(ev.id)}`;
+  const detailsURL = `${BASE}event-details.html?id=${encodeURIComponent(ev.id)}`;
+  const editURL    = `${BASE}edit-event.html?id=${encodeURIComponent(ev.id)}`;
   const date = formatDateRange(ev.start_date, ev.end_date);
   const time = ev.end_time ? ` • ${ev.end_time}` : "";
 
