@@ -730,11 +730,17 @@ footer .container {
     opacity: .95;
     white-space: pre-line;
 
-    /* Preferred (WebKit/Blink) */
-   overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+/* Event/location blocks won't cause vertical bloat */
+    .event-loc {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        /* legacy / widely supported */
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+
+        /* modern spec (keeps VS Code happy, future-proof) */
+        line-clamp: 2;
+    }
 
     /* Fallback (Firefox/older): approximate 2-line clamp */
     line-height: 1.2rem;
@@ -975,12 +981,14 @@ header, .header, .topbar, .appbar {
 /* Buttons: allow them to shrink */
 .btn { min-width: 0; }
 
-/* Event/location blocks won’t cause vertical bloat */
 .event-loc {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;     /* max 2 lines on mobile */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+
+    /* standard property */
+    line-clamp: 2;
 }
 
 @media (max-width: 640px) {
