@@ -42,22 +42,51 @@
         </section>
 
         <section class="card">
+            <h2>Events I’m Invited To</h2>
+            <ul id="list-invited-events" class="list"></ul>
+        </section>
+
+        <section class="card">
             <h2>Pending Invitations</h2>
             <ul id="list-my-invites" class="list"></ul>
         </section>
 
-        <section class="card">
+        <section class="card" id="inv-me">
             <h2>Invitations for Me</h2>
-            <div id="inv-me">
-                <h3 class="sub">Accepted <span id="cnt-acc"></span></h3>
-                <ul id="list-inv-me-accepted" class="list"></ul>
-            
-                <h3 class="sub">Maybe <span id="cnt-may"></span></h3>
-                <ul id="list-inv-me-maybe" class="list"></ul>
-            
-                <h3 class="sub">Declined <span id="cnt-dec"></span></h3>
-                <ul id="list-inv-me-declined" class="list"></ul>
-            </div>
+
+            <!-- ▼ Repliables: Pending / Accepted / Maybe / Declined ▼ -->
+            <h3 class="sub">
+                <button class="collapse-toggle" data-target="#list-inv-me-pending" aria-expanded="false"
+                    aria-controls="list-inv-me-pending">
+                    Pending <span id="cnt-pend"></span>
+                </button>
+            </h3>
+            <ul id="list-inv-me-pending" class="list hidden"></ul>
+
+            <h3 class="sub">
+                <button class="collapse-toggle" data-target="#list-inv-me-accepted" aria-expanded="false"
+                    aria-controls="list-inv-me-accepted">
+                    Accepted <span id="cnt-acc"></span>
+                </button>
+            </h3>
+            <ul id="list-inv-me-accepted" class="list hidden"></ul>
+
+            <h3 class="sub">
+                <button class="collapse-toggle" data-target="#list-inv-me-maybe" aria-expanded="false"
+                    aria-controls="list-inv-me-maybe">
+                    Maybe <span id="cnt-may"></span>
+                </button>
+            </h3>
+            <ul id="list-inv-me-maybe" class="list hidden"></ul>
+
+            <h3 class="sub">
+                <button class="collapse-toggle" data-target="#list-inv-me-declined" aria-expanded="false"
+                    aria-controls="list-inv-me-declined">
+                    Declined <span id="cnt-dec"></span>
+                </button>
+            </h3>
+            <ul id="list-inv-me-declined" class="list hidden"></ul>
+            <!-- ▲ Repliables ▲ -->
         </section>
     </main>
 

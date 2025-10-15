@@ -5,31 +5,89 @@ import { formatDateRange } from "./events.js";
 // Robust relative base (works from repo root or /event-planner/)
 const BASE = location.pathname.includes('/event-planner/') ? './' : './event-planner/';
 
-
 (function () {
   // ----- DOM -----
   const myEventsList = document.querySelector("#list-my-events");
   const myEventsCount = document.querySelector("#count-my-events");
 
+  // NEW: list of events where I'm invited (non-pending)
+  const invitedEventsList = document.querySelector("#list-invited-events");
+
   // "Pending Invitations" (sent by me)
   const sentInvList = document.querySelector("#list-my-invites");
 
   // "Invitations for Me" buckets
+  const listPend = document.querySelector("#list-inv-me-pending");
   const listAcc = document.querySelector("#list-inv-me-accepted");
   const listMay = document.querySelector("#list-inv-me-maybe");
   const listDec = document.querySelector("#list-inv-me-declined");
+  const cntPend = document.querySelector("#cnt-pend");
   const cntAcc = document.querySelector("#cnt-acc");
   const cntMay = document.querySelector("#cnt-may");
   const cntDec = document.querySelector("#cnt-dec");
 
-  // ✅ liens relatifs depuis /event-planner/
   const toDetails = (id) => `${BASE}event-details.html?id=${encodeURIComponent(id)}`;
-  const toEdit    = (id) => `${BASE}edit-event.html?id=${encodeURIComponent(id)}`;
+  const toEdit = (id) => `${BASE}edit-event.html?id=${encodeURIComponent(id)}`;
 
+  // ===== Collapsible sections (no HTML changes required) =====
+  const COLLAPSE_KEY = "invBucketsState"; // { "<ul-id>": true|false }
+  function readCollapseState() {
+    try { return JSON.parse(localStorage.getItem(COLLAPSE_KEY) || "{}"); } catch { return {}; }
+  }
+  function writeCollapseState(state) {
+    try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(state)); } catch { }
+  }
+  function setCollapsed(ul, header, open) {
+    if (!ul || !header) return;
+    ul.classList.toggle("hidden", !open);
+    header.setAttribute("aria-expanded", String(open));
+  }
+  function headerize(h) {
+    // rendre le <h3> cliquable accessible
+    h.setAttribute("tabindex", "0");
+    h.setAttribute("role", "button");
+    h.style.cursor = "pointer";
+  }
+  function setupCollapsibles() {
+    const ids = [
+      "list-inv-me-pending",
+      "list-inv-me-accepted",
+      "list-inv-me-maybe",
+      "list-inv-me-declined",
+    ];
+    const state = readCollapseState(); // défaut = fermé (false)
+    ids.forEach((id) => {
+      const ul = document.getElementById(id);
+      if (!ul) return;
+      // on prend le H3 juste au-dessus du UL
+      let header = ul.previousElementSibling;
+      // si le précédent n'est pas un h3 (markup différent), on remonte jusqu'à trouver un H3
+      while (header && header.tagName !== "H3") header = header.previousElementSibling;
+      if (!header) return;
+
+      headerize(header);
+      header.setAttribute("aria-controls", id);
+
+      const open = Object.prototype.hasOwnProperty.call(state, id) ? !!state[id] : false;
+      setCollapsed(ul, header, open);
+
+      const toggle = () => {
+        const next = !(header.getAttribute("aria-expanded") === "true");
+        setCollapsed(ul, header, next);
+        const s = readCollapseState();
+        s[id] = next;
+        writeCollapseState(s);
+      };
+      header.addEventListener("click", toggle);
+      header.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+      });
+    });
+  }
+  // ===========================================================
 
   // ----- Utils -----
   function buildCounts(invites) {
-    // { event_id: totalInvitesAllStatuses }
     const m = Object.create(null);
     for (const row of invites || []) m[row.event_id] = (m[row.event_id] || 0) + 1;
     return m;
@@ -42,7 +100,7 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
 
   // ----- Renders -----
   function eventCard(ev, counts) {
-    const n = counts[ev.id] || 0; // total all statuses
+    const n = counts[ev.id] || 0;
     const date = formatDateRange(ev.start_date, ev.end_date);
     const time = ev.end_time ? ` • ${ev.end_time}` : "";
     return `
@@ -85,27 +143,25 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
   }
 
   function renderSentInvites(rows) {
-    if (!sentInvList) return; // section optionnelle
+    if (!sentInvList) return;
     if (!rows || !rows.length) {
       sentInvList.innerHTML = `<li class="muted">No pending invitations.</li>`;
       return;
     }
-    sentInvList.innerHTML = rows
-      .map((inv) => {
-        const when = new Date(inv.created_at).toLocaleString();
-        return `
-          <li class="item">
-            <div class="row" style="gap:10px;align-items:center;justify-content:space-between;">
-              <div>
-                <div><strong>${inv.invitee_email}</strong></div>
-                <div class="muted" style="font-size:.9rem">${when}</div>
-              </div>
-              <span class="badge">${inv.status || "pending"}</span>
+    sentInvList.innerHTML = rows.map((inv) => {
+      const when = new Date(inv.created_at).toLocaleString();
+      return `
+        <li class="item">
+          <div class="row" style="gap:10px;align-items:center;justify-content:space-between;">
+            <div>
+              <div><strong>${inv.invitee_email}</strong></div>
+              <div class="muted" style="font-size:.9rem">${when}</div>
             </div>
-          </li>
-        `;
-      })
-      .join("");
+            <span class="badge">${inv.status || "pending"}</span>
+          </div>
+        </li>
+      `;
+    }).join("");
   }
 
   function inviteMeCard(inv, ev, showActions) {
@@ -142,17 +198,19 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
   function renderInvitesBuckets(invs, eventsById) {
     if (!listAcc || !listMay || !listDec || !cntAcc || !cntMay || !cntDec) return;
 
+    listPend && (listPend.innerHTML = "");
     listAcc.innerHTML = "";
     listMay.innerHTML = "";
     listDec.innerHTML = "";
-    let nA = 0,
-      nM = 0,
-      nD = 0;
+
+    let nP = 0, nA = 0, nM = 0, nD = 0;
 
     if (!invs || !invs.length) {
+      if (listPend) listPend.innerHTML = `<li class="muted">None.</li>`;
       listAcc.innerHTML = `<li class="muted">None.</li>`;
       listMay.innerHTML = `<li class="muted">None.</li>`;
       listDec.innerHTML = `<li class="muted">None.</li>`;
+      cntPend && (cntPend.textContent = "(0)");
       cntAcc.textContent = "(0)";
       cntMay.textContent = "(0)";
       cntDec.textContent = "(0)";
@@ -160,42 +218,115 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
     }
 
     for (const inv of invs) {
-      const ev = eventsById[inv.event_id];
-      const showActions = !["accepted", "maybe", "declined"].includes(inv.status || "");
-      const html = inviteMeCard(inv, ev, showActions);
       const st = (inv.status || "pending").toLowerCase();
+      const ev = eventsById[inv.event_id];
+
       if (st === "accepted") {
+        const html = inviteMeCard(inv, ev, false);
         listAcc.insertAdjacentHTML("beforeend", html);
         nA++;
       } else if (st === "maybe") {
+        const html = inviteMeCard(inv, ev, false);
         listMay.insertAdjacentHTML("beforeend", html);
         nM++;
       } else if (st === "declined") {
+        const html = inviteMeCard(inv, ev, false);
         listDec.insertAdjacentHTML("beforeend", html);
         nD++;
       } else {
-        // pending -> on le met dans Maybe par défaut (ou crée une 4e section si tu préfères)
-        listMay.insertAdjacentHTML("beforeend", html);
-        nM++;
+        const html = inviteMeCard(inv, ev, true);
+        if (listPend) {
+          listPend.insertAdjacentHTML("beforeend", html);
+          nP++;
+        } else {
+          listMay.insertAdjacentHTML("beforeend", html);
+          nM++;
+        }
       }
     }
+
+    if (listPend && !nP) listPend.innerHTML = `<li class="muted">None.</li>`;
+    if (!nA) listAcc.innerHTML = listAcc.innerHTML || `<li class="muted">None.</li>`;
+    if (!nM) listMay.innerHTML = listMay.innerHTML || `<li class="muted">None.</li>`;
+    if (!nD) listDec.innerHTML = listDec.innerHTML || `<li class="muted">None.</li>`;
+
+    cntPend && (cntPend.textContent = `(${nP})`);
     cntAcc.textContent = `(${nA})`;
     cntMay.textContent = `(${nM})`;
     cntDec.textContent = `(${nD})`;
   }
 
+  // Helpers for "Events I’m Invited To"
+  function invitedEventCard(ev) {
+    const title = ev?.title || "Untitled";
+    const date = formatDateRange(ev.start_date, ev.end_date);
+    const loc = ev?.location || "";
+    const detailsURL = `${BASE}event-details.html?id=${encodeURIComponent(ev.id)}`;
+    return `
+      <li class="item event-card" data-invited-ev-id="${ev.id}">
+        <div class="event-head">
+          <a class="event-title" href="${detailsURL}">${title}</a>
+          <div class="event-actions">
+            <a class="btn sm" href="${detailsURL}">View</a>
+          </div>
+        </div>
+        <div class="muted">${date}</div>
+        <div class="event-loc">${loc}</div>
+      </li>
+    `;
+  }
+
+  async function addInvitedEventById(eventId) {
+    if (!invitedEventsList) return;
+    // already there?
+    if (invitedEventsList.querySelector(`[data-invited-ev-id="${eventId}"]`)) return;
+    const { data: ev, error } = await supabase
+      .from("events")
+      .select("id,title,location,description,start_date,end_date,end_time")
+      .eq("id", eventId)
+      .single();
+    if (error || !ev) return;
+    invitedEventsList.insertAdjacentHTML("afterbegin", invitedEventCard(ev));
+    // remove “No invited events yet.”
+    const empty = invitedEventsList.querySelector(".muted");
+    if (empty && invitedEventsList.querySelectorAll("[data-invited-ev-id]").length) {
+      empty.remove();
+    }
+  }
+
+  function removeInvitedEventById(eventId) {
+    if (!invitedEventsList) return;
+    invitedEventsList.querySelector(`[data-invited-ev-id="${eventId}"]`)?.remove();
+    if (!invitedEventsList.querySelector("[data-invited-ev-id]")) {
+      invitedEventsList.innerHTML = `<li class="muted">No invited events yet.</li>`;
+    }
+  }
+
+  function renderInvitedEvents(events = []) {
+    if (!invitedEventsList) return;
+    if (!events.length) {
+      invitedEventsList.innerHTML = `<li class="muted">No invited events yet.</li>`;
+      return;
+    }
+    invitedEventsList.innerHTML = events.map(invitedEventCard).join("");
+  }
+
   // ----- Load -----
   async function load() {
+    // init collapsibles (fermé par défaut, état mémorisé)
+    setupCollapsibles();
+
     const user = await getUserOrNull();
     if (!user) {
       location.replace("./index.html");
       return;
     }
 
-    // EVENTS (RLS filtre par propriétaire)
+    // Only my own events
     const { data: evs, error: e1 } = await supabase
       .from("events")
       .select("id,title,location,description,start_date,end_date,end_time")
+      .eq("user_id", user.id)
       .order("start_date", { ascending: true });
 
     if (e1) {
@@ -203,8 +334,7 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
       return;
     }
 
-    // ----- Invitations envoyées par moi -----
-    // (a) Section "Pending Invitations" : seulement pending
+    // Invitations sent by me (pending)
     const { data: sentInvsPending } = await supabase
       .from("invitations")
       .select("id,event_id,invitee_email,status,created_at,inviter_id")
@@ -213,13 +343,14 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
       .order("created_at", { ascending: false });
     renderSentInvites(sentInvsPending || []);
 
-    // (b) Compteur "(n guests)" : toutes les invitations (tous statuts)
+    // Counts for guests
     const { data: sentInvsAll } = await supabase
       .from("invitations")
       .select("event_id")
       .eq("inviter_id", user.id);
     const counts = buildCounts(sentInvsAll || []);
     renderEvents(evs || [], counts);
+
     // reopen last invite form if any
     try {
       const openId = localStorage.getItem("dashboard_invite_open");
@@ -230,16 +361,14 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
       }
     } catch { }
 
-
-    // ----- Invitations pour moi (classified buckets) -----
+    // Invitations for me
     const myEmail = user.email;
     const { data: invsForMe } = await supabase
       .from("invitations")
       .select("id,event_id,invitee_email,status,created_at")
-      .eq("invitee_email", myEmail)
+      .ilike("invitee_email", myEmail)
       .order("created_at", { ascending: false });
 
-    // pour afficher les détails d'event dans les cartes d'invitation
     const evIds = [...new Set((invsForMe || []).map((i) => i.event_id))];
     let eventsById = {};
     if (evIds.length) {
@@ -249,7 +378,15 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
         .in("id", evIds);
       for (const e of evMeta || []) eventsById[e.id] = e;
     }
+
     renderInvitesBuckets(invsForMe || [], eventsById);
+
+    // Populate invited events (only non-pending)
+    const responded = (invsForMe || []).filter(
+      i => ["accepted", "maybe", "declined"].includes((i.status || "").toLowerCase())
+    );
+    const invitedEvents = responded.map(i => eventsById[i.event_id]).filter(Boolean);
+    renderInvitedEvents(invitedEvents);
   }
 
   // ----- Event list actions -----
@@ -279,18 +416,15 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
       const card = myEventsList.querySelector(`.event-card[data-id="${id}"]`);
       const form = card?.querySelector(".invite-form");
       form?.classList.remove("hidden");
-      // A11y: relier le bouton et le formulaire
       const formId = `invite-form-${id}`;
       form.id = formId;
       inviteBtn.setAttribute("aria-controls", formId);
       inviteBtn.setAttribute("aria-expanded", "true");
-      // focus dans le champ email
       const input = card?.querySelector(".invite-input");
       input?.focus();
       try { localStorage.setItem("dashboard_invite_open", id); } catch { }
       return;
     }
-
 
     const cancelBtn = e.target.closest('[data-action="cancel-invite"]');
     if (cancelBtn) {
@@ -299,12 +433,10 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
       const btn = card?.querySelector('[data-action="invite"]');
       form?.classList.add("hidden");
       form?.reset?.();
-      // A11y: effondrer l’état et rendre le focus au bouton
       btn?.setAttribute("aria-expanded", "false");
       btn?.focus();
       return;
     }
-
   });
 
   // send invite
@@ -313,43 +445,30 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
     if (!form) return;
     e.preventDefault();
 
-    // Validation HTML5 (email requis et valide)
     if (!form.checkValidity()) { form.reportValidity(); return; }
 
     const eventId = form.getAttribute("data-id");
     const input = form.querySelector(".invite-input");
     const msg = form.parentElement.querySelector(".invite-msg");
     const email = (input.value || "").trim();
-    if (!email) {
-      msg.textContent = "Please enter an email.";
-      return;
-    }
+    if (!email) { msg.textContent = "Please enter an email."; return; }
 
     const { data: u } = await supabase.auth.getUser();
     const inviterId = u?.user?.id;
-    if (!inviterId) {
-      msg.textContent = "Not signed in.";
-      return;
-    }
+    if (!inviterId) { msg.textContent = "Not signed in."; return; }
 
+    const emailLC = email.toLowerCase();
     const { error } = await supabase
       .from("invitations")
-      .insert({ event_id: eventId, inviter_id: inviterId, invitee_email: email });
+      .insert({ event_id: eventId, inviter_id: inviterId, invitee_email: emailLC });
 
-    if (error) {
-      msg.textContent = error.message;
-      return;
-    }
+    if (error) { msg.textContent = error.message; return; }
 
-    // UI success
     form.classList.add("hidden");
     form.reset();
     msg.textContent = "Invitation sent.";
-    msg.setAttribute("role", "status"); // annonce explicite
-    msg.focus?.(); // (si focusable via CSS; sinon laisse tel quel)
+    msg.setAttribute("role", "status");
 
-
-    // bump local "(n guests)" counter
     const title = form.parentElement.querySelector(".guests-count");
     if (title) {
       const m = /\((\d+)\s+guests\)/i.exec(title.textContent || "");
@@ -357,23 +476,19 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
       title.textContent = `(${current + 1} guests)`;
     }
 
-    // add to "Pending Invitations" list if section exists
     if (sentInvList) {
       const now = new Date().toLocaleString();
-      sentInvList.insertAdjacentHTML(
-        "afterbegin",
-        `
+      sentInvList.insertAdjacentHTML("afterbegin", `
         <li class="item">
           <div class="row" style="gap:10px;align-items:center;justify-content:space-between;">
             <div>
-              <div><strong>${email}</strong></div>
+              <div><strong>${emailLC}</strong></div>
               <div class="muted" style="font-size:.9rem">${now}</div>
             </div>
             <span class="badge">pending</span>
           </div>
         </li>
-      `
-      );
+      `);
     }
   });
 
@@ -385,6 +500,7 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
       /(<span class="badge"[^>]*>)([^<]+)(<\/span>)/i,
       `$1${status}$3`
     );
+    const eventId = li.getAttribute("data-ev-id"); // keep before remove
     li.remove();
 
     if (status === "accepted") listAcc.insertAdjacentHTML("afterbegin", html);
@@ -407,9 +523,17 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
       }
     }
 
+    cntPend && (cntPend.textContent = `(${document.querySelectorAll("#list-inv-me-pending .inv-card").length})`);
     cntAcc.textContent = `(${listAcc.querySelectorAll(".inv-card").length})`;
     cntMay.textContent = `(${listMay.querySelectorAll(".inv-card").length})`;
     cntDec.textContent = `(${listDec.querySelectorAll(".inv-card").length})`;
+
+    // --- LIVE SYNC with "Events I'm Invited To" ---
+    if (status === "accepted" || status === "maybe") {
+      addInvitedEventById(eventId);   // add/update immediately
+    } else if (status === "declined") {
+      removeInvitedEventById(eventId);
+    }
   }
 
   document.getElementById("inv-me")?.addEventListener("click", async (e) => {
@@ -421,10 +545,7 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
       if (!id || !newStatus) return;
 
       const { error } = await supabase.from("invitations").update({ status: newStatus }).eq("id", id);
-      if (error) {
-        alert(error.message);
-        return;
-      }
+      if (error) { alert(error.message); return; }
       placeInBucket(li, newStatus);
       return;
     }
@@ -433,14 +554,11 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
     if (changeBtn) {
       const actions = changeBtn.closest(".actions");
       changeBtn.remove();
-      actions.insertAdjacentHTML(
-        "beforeend",
-        `
+      actions.insertAdjacentHTML("beforeend", `
         <button class="btn sm" data-action="respond" data-status="accepted">Accept</button>
         <button class="btn sm ghost" data-action="respond" data-status="maybe">Maybe</button>
         <button class="btn sm danger" data-action="respond" data-status="declined">Decline</button>
-      `
-      );
+      `);
     }
   });
 

@@ -113,7 +113,6 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
     URL.revokeObjectURL(url);
   }
 
-
   async function load() {
     setupBack();
 
@@ -170,17 +169,6 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
       });
     }
 
-    // ✅ Edit/Delete → chemins relatifs
-    if (btnEdit) btnEdit.href = `${BASE}edit-event.html?id=${encodeURIComponent(id)}`;
-    if (btnDelete) {
-      btnDelete.addEventListener("click", async () => {
-        if (!confirm("Delete this event?")) return;
-        const { error: delErr } = await supabase.from("events").delete().eq("id", id);
-        if (delErr) { alert(delErr.message); return; }
-        location.href = `${BASE}index.html`;
-      });
-    }
-
     // -------- Session (déclarée UNE SEULE fois) --------
     const { data: userData } = await supabase.auth.getUser();
     const currentUser = userData?.user;
@@ -201,9 +189,26 @@ const BASE = location.pathname.includes('/event-planner/') ? './' : './event-pla
       }
     }
 
-    // -------- Guests (owner vs invited) --------
+    // ---- Show/Hide Edit & Delete depending on ownership ----
     const isOwner = !!currentUser && data.user_id === currentUser.id;
+    if (isOwner) {
+      // Chemins relatifs + handler delete uniquement pour le propriétaire
+      if (btnEdit) btnEdit.href = `${BASE}edit-event.html?id=${encodeURIComponent(id)}`;
+      if (btnDelete) {
+        btnDelete.addEventListener("click", async () => {
+          if (!confirm("Delete this event?")) return;
+          const { error: delErr } = await supabase.from("events").delete().eq("id", id);
+          if (delErr) { alert(delErr.message); return; }
+          location.href = `${BASE}index.html`;
+        });
+      }
+    } else {
+      // Invité : pas d’édition/suppression
+      btnEdit?.remove();
+      btnDelete?.remove();
+    }
 
+    // -------- Guests (owner vs invited) --------
     if (isOwner && ownerBox) {
       ownerBox.classList.remove("hidden");
 
