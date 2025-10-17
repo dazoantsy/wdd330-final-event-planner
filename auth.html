@@ -1,73 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>Auth — Event Planner</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
-  <link rel="stylesheet" href="./css/style.css" />
-  <noscript>
-    <style>
-      main { display:block; padding:1rem; }
-      .nojs { background:#fee; border:1px solid #f99; padding:1rem; border-radius:.5rem; }
-    </style>
-  </noscript>
+    <meta charset="UTF-8" />
+    <title>Auth — Event Planner</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <noscript>
+        <style>
+            main {
+                display: block;
+                padding: 1rem;
+            }
+
+            .nojs {
+                background: #fee;
+                border: 1px solid #f99;
+                padding: 1rem;
+                border-radius: .5rem;
+            }
+        </style>
+    </noscript>
 </head>
 
 <body>
-  <div id="__header"></div>
+    <div id="__header"></div>
 
-  <main class="container">
-    <h1>Authentication</h1>
+    <main class="container">
+        <h1>Authentication</h1>
 
-    <section class="card">
-      <form id="auth-form" class="form" novalidate>
-        <label>Email
-          <input id="auth-email" type="email" required autocomplete="email" autofocus />
-        </label>
+        <section class="card">
+            <form id="auth-form" class="form" novalidate>
+                <label>Email
+                    <input id="auth-email" type="email" required autocomplete="email" autofocus />
+                </label>
 
-        <label>Password
-          <input id="auth-password" type="password" required autocomplete="current-password" />
-        </label>
+                <label>Password
+                    <input id="auth-password" type="password" required autocomplete="current-password" />
+                </label>
 
-        <div class="row">
-          <button id="btn-signin" type="button" class="btn">Sign in</button>
-          <button id="btn-signup" type="button" class="btn ghost">Sign up</button>
-          <button id="btn-reset" type="button" class="btn ghost">Reset password</button>
-        </div>
+                <div class="row">
+                    <button id="btn-signin" type="button" class="btn">Sign in</button>
+                    <button id="btn-signup" type="button" class="btn ghost">Sign up</button>
+                    <button id="btn-reset" type="button" class="btn ghost">Reset password</button>
+                </div>
 
-        <p id="auth-status" class="status" aria-live="polite"></p>
+                <p id="auth-status" class="status" aria-live="polite"></p>
 
-        <!-- Nouveau : renvoyer l’email de confirmation -->
-        <div class="hint">
-          <p>Didn’t receive the confirmation email, or the link has expired?</p>
-          <button type="button" class="btn linklike" data-action="resend-confirmation">
-            Resend confirmation email
-          </button>
-        </div>
-      </form>
-    </section>
+                <!-- Nouveau : renvoyer l’email de confirmation -->
+                <div class="hint">
+                    <p>Didn’t receive the confirmation email, or the link has expired?</p>
+                    <button type="button" class="btn linklike" data-action="resend-confirmation">
+                        Resend confirmation email
+                    </button>
+                </div>
+            </form>
+        </section>
 
-    <noscript>
-      <p class="nojs">JavaScript is required to authenticate. Please enable it and reload this page.</p>
-    </noscript>
+        <noscript>
+            <p class="nojs">JavaScript is required to authenticate. Please enable it and reload this page.</p>
+        </noscript>
 
-    <section class="muted">
-      <p>
-        After signing up, check your inbox and confirm your email.
-        If the link failed or expired, use “Resend confirmation email” above.
-      </p>
-    </section>
-  </main>
+        <section class="muted">
+            <p>
+                After signing up, check your inbox and confirm your email.
+                If the link failed or expired, use “Resend confirmation email” above.
+            </p>
+        </section>
+    </main>
 
-  <div id="__footer"></div>
+    <div id="__footer"></div>
 
-  <script type="module">
-    import { loadPartials } from "./js/load-partials.js";
-    await loadPartials();
-    // gère le header/sign-in/sign-out + callback Supabase + resend
-    await import("./js/auth.js");
-    // gère les actions Sign in / Sign up / Reset (ton fichier existant)
-    await import("./js/auth-page.js");
-  </script>
+    <script type="module">
+        import { loadPartials } from "./js/load-partials.js";
+        await loadPartials();
+        // gère le header/sign-in/sign-out + callback Supabase + resend
+        await import("./js/auth.js");
+        // gère les actions Sign in / Sign up / Reset (ton fichier existant)
+        await import("./js/auth-page.js");
+    </script>
 </body>
+
 </html>
