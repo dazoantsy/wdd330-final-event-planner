@@ -1,7 +1,9 @@
 // /js/auth.js — header, callback Supabase, resend, garde d'accès (version corrigée)
 import { supabase, getUserOrNull, rootIndexURL } from "./api.js?v=20251017";
 
-const AUTH_URL = "https://dazoantsy.github.io/wdd330-final-event-planner/auth.html";
+// URL canonique d'auth pour tout le flux (signup/resend/reset, guards, sign-in/out)
+const AUTH_ABS = "https://dazoantsy.github.io/wdd330-final-event-planner/auth.html";
+const AUTH_URL = "/wdd330-final-event-planner/auth.html?v=20251017";
 
 const els = {
   signInLink: null,
@@ -33,8 +35,8 @@ function setHeaderState(user) {
 
 async function onSignInClick(e) {
   e?.preventDefault();
-  // Aller directement sur la page d'auth canonique (évite la Home quand on n'est pas connecté)
-  location.href = AUTH_URL + "?v=20251017";
+  // Aller directement à la page d'auth canonique (évite d'atterrir sur la Home hors session)
+  location.href = AUTH_URL;
 }
 
 async function onSignOutClick(e) {
@@ -43,12 +45,12 @@ async function onSignOutClick(e) {
     await supabase.auth.signOut();
   } finally {
     setHeaderState(null);
-    // Après sign out, renvoyer vers la page d'auth canonique
-    location.replace(AUTH_URL + "?v=20251017");
+    // Après sign out, ramener vers la page d'auth canonique
+    location.replace(AUTH_URL);
   }
 }
 
-// Parse le hash (#k=v&k2=v2)
+// Utilitaire: parse le hash (#k=v&k2=v2)
 function parseHashParams() {
   if (!location.hash || location.hash.length < 2) return {};
   const h = location.hash.substring(1);
@@ -72,7 +74,7 @@ async function handleAuthCallback() {
     return;
   }
 
-  // Si access_token présent, Supabase gère la session automatiquement.
+  // Si access_token présent, Supabase gère normalement la session automatiquement.
   if (params.access_token) {
     history.replaceState({}, document.title, location.pathname + location.search);
   }
@@ -88,12 +90,12 @@ async function setupResendIfPresent(user) {
         alert("Please enter your email on the sign in/up form first.");
         return;
       }
-      // IMPORTANT : rediriger explicitement vers auth.html (évite le 404)
+      // IMPORTANT : rediriger explicitement vers auth.html (évite tout 404)
       const { error } = await supabase.auth.resend({
         type: "signup",
         email,
         options: {
-          emailRedirectTo: AUTH_URL,
+          emailRedirectTo: AUTH_ABS,
         },
       });
       if (error) throw error;
@@ -111,13 +113,13 @@ async function enforceConfirmedGuard(user) {
   if (!requiresConfirmed) return;
 
   if (!user) {
-    location.replace(AUTH_URL + "?v=20251017");
+    location.replace(AUTH_URL);
     return;
   }
   const confirmed = !!user.email_confirmed_at;
   if (!confirmed) {
     alert("Please confirm your email before accessing this page.");
-    location.replace(AUTH_URL + "?v=20251017");
+    location.replace(AUTH_URL);
   }
 }
 
@@ -135,7 +137,7 @@ async function waitForDOM(ms = 25, tries = 200) {
   await handleAuthCallback();
 
   // État initial user/session
-  const { data: { session} } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user || await getUserOrNull();
   setHeaderState(user || null);
 
