@@ -10,6 +10,8 @@ const els = {
   signOutLink: null,
   userEmail: null,
   resendBtn: null,
+  emailInput: null,
+  statusEl: null,
 };
 
 function bindHeaderElements() {
@@ -17,6 +19,8 @@ function bindHeaderElements() {
   els.signOutLink = document.querySelector('[data-action="sign-out"]');
   els.userEmail  = document.querySelector('[data-el="user-email"]');
   els.resendBtn  = document.querySelector('[data-action="resend-confirmation"]');
+  els.emailInput = document.getElementById("auth-email");     // <-- récupère l'email du formulaire
+  els.statusEl   = document.getElementById("auth-status");
   return true;
 }
 
@@ -80,17 +84,30 @@ async function handleAuthCallback() {
   }
 }
 
+function setStatus(msg, isErr = false) {
+  if (!els.statusEl) return;
+  els.statusEl.textContent = msg || "";
+  els.statusEl.style.color = isErr ? "#b91c1c" : "#065f46";
+}
+
 async function setupResendIfPresent(user) {
   if (!els.resendBtn) return;
+
   els.resendBtn.addEventListener("click", async (e) => {
     e.preventDefault();
     try {
-      const email = user?.email;
+      // 1) on prend l'email de la session SI dispo, sinon du champ formulaire
+      let email = user?.email || (els.emailInput?.value || "").trim();
       if (!email) {
         alert("Please enter your email on the sign in/up form first.");
         return;
       }
-      // IMPORTANT : rediriger explicitement vers auth.html (évite tout 404)
+
+      // désactiver pendant l'envoi
+      els.resendBtn.disabled = true;
+      setStatus("Sending confirmation email…");
+
+      // 2) forcer la redirection vers auth.html (ABSOLUE) → évite tout 404
       const { error } = await supabase.auth.resend({
         type: "signup",
         email,
@@ -98,11 +115,16 @@ async function setupResendIfPresent(user) {
           emailRedirectTo: AUTH_ABS,
         },
       });
+
       if (error) throw error;
-      alert("A new confirmation email has been sent.");
+      setStatus("A new confirmation email has been sent.");
+      alert("A new confirmation email has been sent to " + email + ".");
     } catch (err) {
       console.error(err);
+      setStatus(err?.message || "Could not resend the confirmation email.", true);
       alert("Could not resend the confirmation email.");
+    } finally {
+      els.resendBtn.disabled = false;
     }
   });
 }
