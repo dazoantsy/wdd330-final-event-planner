@@ -1,5 +1,5 @@
 // /js/header-logo.js
-import { supabase, isInPlanner, rootIndexURL } from "./api.js";
+import { supabase, isInPlanner, rootIndexURL } from "./api.js?v=20251017";
 
 (async function () {
     // Le lien du logo dans le header
