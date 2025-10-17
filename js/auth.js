@@ -1,5 +1,7 @@
-// /js/auth.js — header, callback Supabase, resend, garde d'accès
+// /js/auth.js — header, callback Supabase, resend, garde d'accès (version corrigée)
 import { supabase, getUserOrNull, rootIndexURL } from "./api.js?v=20251017";
+
+const AUTH_URL = "https://dazoantsy.github.io/wdd330-final-event-planner/auth.html";
 
 const els = {
   signInLink: null,
@@ -31,8 +33,8 @@ function setHeaderState(user) {
 
 async function onSignInClick(e) {
   e?.preventDefault();
-  // Envoie vers ta page d'auth / accueil
-  location.href = rootIndexURL();
+  // Aller directement sur la page d'auth canonique (évite la Home quand on n'est pas connecté)
+  location.href = AUTH_URL + "?v=20251017";
 }
 
 async function onSignOutClick(e) {
@@ -41,11 +43,12 @@ async function onSignOutClick(e) {
     await supabase.auth.signOut();
   } finally {
     setHeaderState(null);
-    location.replace(rootIndexURL());
+    // Après sign out, renvoyer vers la page d'auth canonique
+    location.replace(AUTH_URL + "?v=20251017");
   }
 }
 
-// Utilitaire: parse le hash (#k=v&k2=v2)
+// Parse le hash (#k=v&k2=v2)
 function parseHashParams() {
   if (!location.hash || location.hash.length < 2) return {};
   const h = location.hash.substring(1);
@@ -63,17 +66,14 @@ async function handleAuthCallback() {
   if (!params) return;
 
   if (params.error) {
-    // Exemple: otp_expired, invalid, etc.
     console.warn("Supabase auth error:", params);
     alert("Email confirmation failed: " + (params.error_description || params.error));
-    // Nettoie le hash pour éviter que ça réapparaisse au refresh
     history.replaceState({}, document.title, location.pathname + location.search);
     return;
   }
 
-  // Si access_token présent, Supabase gère normalement la session automatiquement.
+  // Si access_token présent, Supabase gère la session automatiquement.
   if (params.access_token) {
-    // Nettoie le hash et reste sur la même page
     history.replaceState({}, document.title, location.pathname + location.search);
   }
 }
@@ -88,12 +88,12 @@ async function setupResendIfPresent(user) {
         alert("Please enter your email on the sign in/up form first.");
         return;
       }
-      // Resend confirmation email (supabase-js v2)
+      // IMPORTANT : rediriger explicitement vers auth.html (évite le 404)
       const { error } = await supabase.auth.resend({
         type: "signup",
         email,
         options: {
-          emailRedirectTo: "https://dazoantsy.github.io/wdd330-final-event-planner/",
+          emailRedirectTo: AUTH_URL,
         },
       });
       if (error) throw error;
@@ -111,15 +111,13 @@ async function enforceConfirmedGuard(user) {
   if (!requiresConfirmed) return;
 
   if (!user) {
-    // Pas connecté → retourne à la page d’auth
-    location.replace("./auth.html");
+    location.replace(AUTH_URL + "?v=20251017");
     return;
   }
-  // Selon les versions, email_confirmed_at est soit null, soit ISO date
   const confirmed = !!user.email_confirmed_at;
   if (!confirmed) {
     alert("Please confirm your email before accessing this page.");
-    location.replace("./auth.html");
+    location.replace(AUTH_URL + "?v=20251017");
   }
 }
 
@@ -137,7 +135,7 @@ async function waitForDOM(ms = 25, tries = 200) {
   await handleAuthCallback();
 
   // État initial user/session
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session} } = await supabase.auth.getSession();
   const user = session?.user || await getUserOrNull();
   setHeaderState(user || null);
 
