@@ -1,48 +1,55 @@
-// /js/auth-page.js — logique des boutons Sign in / Sign up sur index.html & auth.html
-import { supabase, rootIndexURL } from "./api.js?v=20251017";
+// /js/auth-page.js — handlers Sign in / Sign up / Reset (verrouillés sur l'URL canonique)
+import { supabase } from "./api.js?v=20251017";
 
-const emailEl = document.querySelector("#auth-email");
-const passEl = document.querySelector("#auth-password");
-const btnIn = document.querySelector("#btn-signin");
-const btnUp = document.querySelector("#btn-signup");
-const btnReset = document.querySelector("#btn-reset");
-const statusEl = document.querySelector("#auth-status");
+const AUTH_ABS = "https://dazoantsy.github.io/wdd330-final-event-planner/auth.html";
+const statusEl = document.getElementById("auth-status");
+const emailEl  = document.getElementById("auth-email");
+const passEl   = document.getElementById("auth-password");
 
-function setStatus(msg, kind = "info") {
-    if (!statusEl) return;
-    statusEl.textContent = msg || "";
-    statusEl.className = "status " + (kind || "info");
+function setStatus(msg, isErr = false) {
+  if (!statusEl) return;
+  statusEl.textContent = msg || "";
+  statusEl.style.color = isErr ? "#b91c1c" : "#065f46";
 }
 
-async function signIn() {
-    const email = emailEl?.value?.trim();
-    const password = passEl?.value || "";
-    if (!email || !password) { setStatus("Email and password required", "error"); return; }
-    setStatus("Signing in...");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { setStatus(error.message, "error"); return; }
-    location.href = "./event-planner/index.html";
-}
+document.getElementById("btn-signin")?.addEventListener("click", async () => {
+  const email = (emailEl?.value || "").trim();
+  const password = passEl?.value || "";
+  if (!email || !password) {
+    setStatus("Email and password are required.", true);
+    return;
+  }
+  setStatus("Signing in…");
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) { setStatus(error.message, true); return; }
+  setStatus("Signed in. Redirecting…");
+  // va sur la Home de l’app après login
+  location.replace("/wdd330-final-event-planner/event-planner/index.html?v=20251017");
+});
 
-async function signUp() {
-    const email = emailEl?.value?.trim();
-    const password = passEl?.value || "";
-    if (!email || !password) { setStatus("Email and password required", "error"); return; }
-    setStatus("Creating account...");
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) { setStatus(error.message, "error"); return; }
-    setStatus("Account created. Check your email, then sign in.", "success");
-}
+document.getElementById("btn-signup")?.addEventListener("click", async () => {
+  const email = (emailEl?.value || "").trim();
+  const password = passEl?.value || "";
+  if (!email || !password) {
+    setStatus("Email and password are required.", true);
+    return;
+  }
+  setStatus("Creating account…");
+  const { error } = await supabase.auth.signUp(
+    { email, password },
+    { emailRedirectTo: AUTH_ABS }     // ← IMPORTANT : envoie toujours vers /auth.html
+  );
+  if (error) { setStatus(error.message, true); return; }
+  setStatus("Check your inbox to confirm your email.");
+});
 
-async function resetPw() {
-    const email = emailEl?.value?.trim();
-    if (!email) { setStatus("Enter your email", "error"); return; }
-    setStatus("Sending reset link...");
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: location.origin + "/auth.html" });
-    if (error) { setStatus(error.message, "error"); return; }
-    setStatus("Reset email sent.", "success");
-}
-
-btnIn?.addEventListener("click", signIn);
-btnUp?.addEventListener("click", signUp);
-btnReset?.addEventListener("click", resetPw);
+document.getElementById("btn-reset")?.addEventListener("click", async () => {
+  const email = (emailEl?.value || "").trim();
+  if (!email) { setStatus("Enter your email first.", true); return; }
+  setStatus("Sending reset email…");
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: AUTH_ABS,            // ← IMPORTANT : reset renvoie aussi vers /auth.html
+  });
+  if (error) { setStatus(error.message, true); return; }
+  setStatus("Reset email sent. Check your inbox.");
+});
