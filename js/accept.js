@@ -1,6 +1,6 @@
 // js/accept.js — choix RSVP sur invitation
-import { supabase } from "./api.js";
-import { upsertRsvp } from "./db.js";
+import { supabase } from "./api.js?v=20251017";
+import { upsertRsvp } from "./db.js?v=20251017";
 
 function getParam(name) {
     const u = new URL(location.href);
