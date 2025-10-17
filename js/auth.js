@@ -1,5 +1,5 @@
 // /js/auth.js — header, callback Supabase, resend, garde d'accès
-import { supabase, getUserOrNull, rootIndexURL } from "./api.js";
+import { supabase, getUserOrNull, rootIndexURL } from "./api.js?v=20251017";
 
 const els = {
   signInLink: null,
