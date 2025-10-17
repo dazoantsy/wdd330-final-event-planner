@@ -1,5 +1,5 @@
 // /js/auth-page.js — logique des boutons Sign in / Sign up sur index.html & auth.html
-import { supabase, rootIndexURL } from "./api.js";
+import { supabase, rootIndexURL } from "./api.js?v=20251017";
 
 const emailEl = document.querySelector("#auth-email");
 const passEl = document.querySelector("#auth-password");
