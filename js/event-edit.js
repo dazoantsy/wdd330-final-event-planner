@@ -1,6 +1,6 @@
 // /js/event-edit.js — corrections: pas de collision avec window.location + suggestions lieu
-import { supabase, getUserOrNull } from "./api.js";
-import { toDbTimestampLocal, fromDbToLocalInput } from "./date-helpers.js";
+import { supabase, getUserOrNull } from "./api.js?v=20251017";
+import { toDbTimestampLocal, fromDbToLocalInput } from "./date-helpers.js?v=20251017";
 
 // --- Weather helpers (WMO -> English text + emoji) ---
 function weatherCodeToText(code) {
