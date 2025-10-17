@@ -1,6 +1,6 @@
 // /js/dashboard.js — events + pending invites (sent) + invites for me (buckets)
-import { supabase, getUserOrNull } from "./api.js";
-import { formatDateRange } from "./events.js";
+import { supabase, getUserOrNull } from "./api.js?v=20251017";
+import { formatDateRange } from "./events.js?v=20251017";
 
 // Robust relative base (works from repo root or /event-planner/)
 const BASE = location.pathname.includes('/event-planner/') ? './' : './event-planner/';
