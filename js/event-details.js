@@ -1,7 +1,7 @@
 // /js/event-details.js  — Back + Details + Guests (owner / invited)
 // Une seule variable de session: currentUser
-import { supabase } from "./api.js";
-import { formatDateRange, formatTimeRange } from "./events.js";
+import { supabase } from "./api.js?v=20251017";
+import { formatDateRange, formatTimeRange } from "./events.js?v=20251017";
 
 const BASE = location.pathname.includes('/event-planner/') ? './' : './event-planner/';
 
