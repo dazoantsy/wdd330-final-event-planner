@@ -1,6 +1,6 @@
 // /js/events-list.js — My Events page: own events + accepted invites + pending banner
-import { supabase } from "./api.js";
-import { formatDateRange } from "./events.js";
+import { supabase } from "./api.js?v=20251017";
+import { formatDateRange } from "./events.js?v=20251017";
 
 // Robust root for links inside /event-planner/
 const ROOT = location.pathname.includes("/event-planner/my-events/")
