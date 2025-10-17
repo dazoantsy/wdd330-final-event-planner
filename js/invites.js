@@ -1,5 +1,5 @@
 // /js/invites.js — invitations (API simple)
-import { supabase } from "./api.js";
+import { supabase } from "./api.js?v=20251017";
 
 export async function inviteByEmail(eventId, inviteeEmail) {
   const { data: ur } = await supabase.auth.getUser();
