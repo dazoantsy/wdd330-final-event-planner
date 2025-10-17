@@ -1,5 +1,5 @@
 // js/db.js — accès données : events + rsvps (pas d'invitations)
-import { supabase } from "./api.js";
+import { supabase } from "./api.js?v=20251017";
 
 const KEY = (uid) => `events:${uid}`;
 
