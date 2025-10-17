@@ -1,48 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <title>Event Planner — Home</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
-    <link rel="stylesheet" href="./css/style.css?v=20251017" />
-    <meta name="color-scheme" content="dark light" />
+  <meta charset="utf-8" />
+  <title>Redirecting to auth…</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Redirection immédiate (fallback sans JS) -->
+  <meta http-equiv="refresh" content="0; url=/wdd330-final-event-planner/auth.html?v=20251017">
+  <link rel="canonical" href="/wdd330-final-event-planner/auth.html?v=20251017">
+  <style>
+    html,body{height:100%;margin:0;font:16px/1.4 system-ui,Segoe UI,Roboto,Arial}
+    .wrap{min-height:100%;display:grid;place-items:center}
+    .card{padding:1rem 1.25rem;border:1px solid #e5e7eb;border-radius:12px;max-width:560px}
+    .muted{color:#6b7280}
+    a{color:#2563eb;text-decoration:none}
+    a:hover{text-decoration:underline}
+  </style>
+  <script>
+    // Redirection robuste côté JS
+    (function () {
+      var target = "/wdd330-final-event-planner/auth.html?v=20251017";
+      try {
+        // Si la page est chargée sous un autre chemin, on force le chemin absolu du Project Pages
+        if (location.pathname.indexOf("/wdd330-final-event-planner/") !== 0) {
+          location.replace("https://dazoantsy.github.io/wdd330-final-event-planner/auth.html?v=20251017");
+        } else {
+          location.replace(target);
+        }
+      } catch (_) {
+        // Fallback dur (cas CSP / très vieux navigateurs)
+        window.location.href = target;
+      }
+    }());
+  </script>
 </head>
-
 <body>
-    <div id="__header"></div>
-
-    <main class="container">
-        <h1>Welcome to Event Planner</h1>
-        <p class="muted">Sign in to start planning your events.</p>
-
-        <section class="card">
-            <h2>Sign in / Sign up</h2>
-            <form id="auth-form" class="form">
-                <label>Email
-                    <input id="auth-email" type="email" required placeholder="you@example.com" autocomplete="email" />
-                </label>
-                <label>Password
-                    <input id="auth-password" type="password" required autocomplete="current-password" />
-                </label>
-                <div class="row">
-                    <button id="btn-signin" type="button" class="btn">Sign in</button>
-                    <button id="btn-signup" type="button" class="btn ghost">Sign up</button>
-                </div>
-                <p id="auth-status" class="status"></p>
-            </form>
-        </section>
-    </main>
-
-    <div id="__footer"></div>
-
-    <script type="module">
-        import { loadPartials } from "./js/load-partials.js?v=20251017";
-        await loadPartials();
-        await import("./js/auth.js?v=20251017");
-        await import("./js/header-logo.js?v=20251017");
-        await import("./js/auth-page.js?v=20251017");
-    </script>
+  <div class="wrap">
+    <div class="card">
+      <h1>Redirecting…</h1>
+      <p class="muted">You are being redirected to the authentication page.</p>
+      <p>
+        If nothing happens, click here:
+        <a href="/wdd330-final-event-planner/auth.html?v=20251017">Go to sign in / sign up</a>
+      </p>
+    </div>
+  </div>
+  <noscript>
+    <div class="wrap">
+      <div class="card">
+        <h1>JavaScript required</h1>
+        <p class="muted">Please enable JavaScript and reload. Or use this link:</p>
+        <p><a href="/wdd330-final-event-planner/auth.html?v=20251017">Open auth.html</a></p>
+      </div>
+    </div>
+  </noscript>
 </body>
-
 </html>
