@@ -141,7 +141,7 @@
 
       function validatePair() {
         const ok = (pwd?.value || '') === (confirm?.value || '');
-        const msg = ok ? '' : 'Les mots de passe ne correspondent pas.';
+        const msg = ok ? '' : 'Passwords do not match.';
         if (error) error.textContent = msg;
         if (confirm?.setCustomValidity) confirm.setCustomValidity(msg);
         return ok;
