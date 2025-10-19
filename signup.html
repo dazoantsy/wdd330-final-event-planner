@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sign up — Event Planner</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
+  <link rel="stylesheet" href="./css/style.css" />
+
+  <!-- Styles minimes pour l’icône œil dans les champs -->
+  <style>
+    .password-field { position: relative; display: block; }
+    .password-field input {
+      width: 100%;
+      padding-right: 2.75rem; /* espace pour l'œil */
+    }
+    .password-field .toggle-pass {
+      position: absolute;
+      right: .6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 2rem; height: 2rem;
+      display: inline-grid; place-items: center;
+      background: transparent; border: none; cursor: pointer; border-radius: .5rem;
+    }
+    .password-field .toggle-pass:focus-visible {
+      outline: 2px solid #7aa2ff; outline-offset: 2px;
+    }
+    .password-field .toggle-pass svg { width: 1.15rem; height: 1.15rem; }
+    .form-error { color:#c0392b; font-size:.9rem; min-height:1.2em; margin-top:.25rem; }
+  </style>
+
+  <noscript>
+    <style>
+      main { display:block; padding:1rem; }
+      .nojs { background:#fee; border:1px solid #f99; padding:1rem; border-radius:.5rem; }
+    </style>
+  </noscript>
+</head>
+<body>
+  <div id="__header"></div>
+
+  <main class="container">
+    <h1>Create your account</h1>
+
+    <section class="card">
+      <form id="signup-form" class="form" novalidate>
+        <label>Email
+          <input id="auth-email" type="email" required autocomplete="email" autofocus />
+        </label>
+
+        <label>Password
+          <div class="password-field">
+            <input id="auth-password" type="password" required autocomplete="new-password" />
+            <button type="button"
+                    class="toggle-pass"
+                    data-password-toggle="auth-password"
+                    aria-pressed="false"
+                    aria-label="Show password">
+              <!-- Œil SVG -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </label>
+
+        <label>Confirm password
+          <div class="password-field">
+            <input id="auth-password-confirm" type="password" required autocomplete="new-password" />
+            <button type="button"
+                    class="toggle-pass"
+                    data-password-toggle="auth-password-confirm"
+                    aria-pressed="false"
+                    aria-label="Show password">
+              <!-- Œil SVG -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </label>
+
+        <p id="signup-password-error" class="form-error" aria-live="polite"></p>
+
+        <div class="row">
+          <button id="btn-signup" type="button" class="btn">Sign up</button>
+          <a href="./auth.html" class="btn ghost">Back to Sign in</a>
+        </div>
+
+        <p id="auth-status" class="status" aria-live="polite"></p>
+
+        <div class="hint">
+          <p>Didn’t receive the confirmation email, or the link has expired?</p>
+          <button type="button" class="btn linklike" data-action="resend-confirmation">
+            Resend confirmation email
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <noscript>
+      <p class="nojs">JavaScript is required to sign up. Please enable it and reload this page.</p>
+    </noscript>
+  </main>
+
+  <div id="__footer"></div>
+
+  <script type="module">
+    import { loadPartials } from "./js/load-partials.js";
+    await loadPartials();
+
+    // Réutilise les scripts existants (pas de changement dedans)
+    await import("./js/auth.js");        // header/sign-out/callback/resend
+    await import("./js/auth-page.js");   // gère #btn-signup (Supabase signUp)
+
+    // Œils show/hide pour les deux champs
+    (function () {
+      document.querySelectorAll('.toggle-pass[data-password-toggle]').forEach(btn => {
+        const id = btn.getAttribute('data-password-toggle');
+        const input = document.getElementById(id);
+        if (!input) return;
+        btn.addEventListener('click', () => {
+          const show = input.type === 'password';
+          input.type = show ? 'text' : 'password';
+          btn.setAttribute('aria-pressed', String(show));
+          btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        });
+      });
+    })();
+
+    // Validation Sign Up: Password doit égaler Confirm (blocage AVANT l’appel Supabase)
+    (function () {
+      const pwd = document.getElementById('auth-password');
+      const confirm = document.getElementById('auth-password-confirm');
+      const error = document.getElementById('signup-password-error');
+      const btnSignup = document.getElementById('btn-signup');
+
+      function validatePair() {
+        const ok = (pwd?.value || '') === (confirm?.value || '');
+        const msg = ok ? '' : 'Les mots de passe ne correspondent pas.';
+        if (error) error.textContent = msg;
+        if (confirm?.setCustomValidity) confirm.setCustomValidity(msg);
+        return ok;
+      }
+
+      // Bloquer le clic Sign up si mismatch (avant auth-page.js)
+      btnSignup?.addEventListener('click', (e) => {
+        if (!validatePair()) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          try { confirm?.reportValidity?.(); } catch {}
+          alert('Please make sure the passwords match before signing up.');
+        }
+      }, { capture: true });
+
+      ['input','change','blur'].forEach(evt => {
+        [pwd, confirm].forEach(el => el?.addEventListener(evt, validatePair));
+      });
+    })();
+  </script>
+</body>
+</html>
