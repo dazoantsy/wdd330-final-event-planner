@@ -1,84 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <title>Auth — Event Planner</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
-    <link rel="stylesheet" href="./css/style.css?v=20251017" />
-    <noscript>
-        <style>
-            main {
-                display: block;
-                padding: 1rem;
-            }
+  <meta charset="UTF-8" />
+  <title>Auth — Event Planner</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
+  <link rel="stylesheet" href="./css/style.css" />
 
-            .nojs {
-                background: #fee;
-                border: 1px solid #f99;
-                padding: 1rem;
-                border-radius: .5rem;
-            }
-        </style>
-    </noscript>
+  <!-- Styles minimes pour placer l’icône œil DANS le champ -->
+  <style>
+    .password-field { position: relative; display: block; }
+    .password-field input {
+      width: 100%;
+      padding-right: 2.75rem; /* espace pour le bouton œil */
+    }
+    .password-field .toggle-pass {
+      position: absolute;
+      right: .6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 2rem;
+      height: 2rem;
+      display: inline-grid;
+      place-items: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      border-radius: .5rem;
+    }
+    .password-field .toggle-pass:focus-visible {
+      outline: 2px solid #7aa2ff;
+      outline-offset: 2px;
+    }
+    .password-field .toggle-pass svg { width: 1.15rem; height: 1.15rem; }
+  </style>
+
+  <noscript>
+    <style>
+      main { display:block; padding:1rem; }
+      .nojs { background:#fee; border:1px solid #f99; padding:1rem; border-radius:.5rem; }
+    </style>
+  </noscript>
 </head>
-
 <body>
-    <div id="__header"></div>
+  <div id="__header"></div>
 
-    <main class="container">
-        <h1>Authentication</h1>
+  <main class="container">
+    <h1>Sign in</h1>
 
-        <section class="card">
-            <form id="auth-form" class="form" novalidate>
-                <label>Email
-                    <input id="auth-email" type="email" required autocomplete="email" autofocus />
-                </label>
+    <section class="card">
+      <form id="auth-form" class="form" novalidate>
+        <label>Email
+          <input id="auth-email" type="email" required autocomplete="email" autofocus />
+        </label>
 
-                <label>Password
-                    <input id="auth-password" type="password" required autocomplete="current-password" />
-                </label>
+        <label>Password
+          <div class="password-field">
+            <input id="auth-password" type="password" required autocomplete="current-password" />
+            <button type="button"
+                    class="toggle-pass"
+                    data-password-toggle="auth-password"
+                    aria-pressed="false"
+                    aria-label="Show password">
+              <!-- Œil SVG -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </label>
 
-                <div class="row">
-                    <button id="btn-signin" type="button" class="btn">Sign in</button>
-                    <button id="btn-signup" type="button" class="btn ghost">Sign up</button>
-                    <button id="btn-reset" type="button" class="btn ghost">Reset password</button>
-                </div>
+        <div class="row">
+          <button id="btn-signin" type="button" class="btn">Sign in</button>
+          <a href="./signup.html" class="btn ghost" id="link-signup">Sign up</a>
+          <button id="btn-reset" type="button" class="btn ghost">Reset password</button>
+        </div>
 
-                <p id="auth-status" class="status" aria-live="polite"></p>
+        <p id="auth-status" class="status" aria-live="polite"></p>
 
-                <!-- Nouveau : renvoyer l’email de confirmation -->
-                <div class="hint">
-                    <p>Didn’t receive the confirmation email, or the link has expired?</p>
-                    <button type="button" class="btn linklike" data-action="resend-confirmation">
-                        Resend confirmation email
-                    </button>
-                </div>
-            </form>
-        </section>
+        <div class="hint">
+          <p>Didn’t receive the confirmation email, or the link has expired?</p>
+          <button type="button" class="btn linklike" data-action="resend-confirmation">
+            Resend confirmation email
+          </button>
+        </div>
+      </form>
+    </section>
 
-        <noscript>
-            <p class="nojs">JavaScript is required to authenticate. Please enable it and reload this page.</p>
-        </noscript>
+    <noscript>
+      <p class="nojs">JavaScript is required to authenticate. Please enable it and reload this page.</p>
+    </noscript>
+  </main>
 
-        <section class="muted">
-            <p>
-                After signing up, check your inbox and confirm your email.
-                If the link failed or expired, use “Resend confirmation email” above.
-            </p>
-        </section>
-    </main>
+  <div id="__footer"></div>
 
-    <div id="__footer"></div>
+  <script type="module">
+    import { loadPartials } from "./js/load-partials.js";
+    await loadPartials();
+    await import("./js/auth.js");        // header/sign-out/callback/resend (inchangé)
+    await import("./js/auth-page.js");   // gère btn-signin / reset (inchangé)
 
-    <script type="module">
-        import { loadPartials } from "./js/load-partials.js?v=20251017";
-        await loadPartials();
-        // gère le header/sign-in/sign-out + callback Supabase + resend
-        await import("./js/auth.js?v=20251017");
-        // gère les actions Sign in / Sign up / Reset (ton fichier existant)
-        await import("./js/auth-page.js?v=20251017");
-    </script>
+    // Toggle œil (show/hide) pour le champ mot de passe
+    (function () {
+      const btn = document.querySelector('.toggle-pass[data-password-toggle="auth-password"]');
+      const input = document.getElementById('auth-password');
+      if (!btn || !input) return;
+      btn.addEventListener('click', () => {
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.setAttribute('aria-pressed', String(show));
+        btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      });
+    })();
+  </script>
 </body>
-
 </html>
